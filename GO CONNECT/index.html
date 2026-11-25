@@ -599,7 +599,7 @@ const navIconPaths={
 'list-checks':'<path d="m3 6 2 2 4-4M12 7h9M3 13l2 2 4-4m3 2h9M3 20h6m3 0h9"/>',
 'chart-no-axes-combined':'<path d="M3 3v18h18M7 14l4-4 4 3 6-7"/><path d="M17 6h4v4"/>',
 'chart-column':'<path d="M4 20V10m5 10V4m5 16v-7m5 7V7"/>',
-'settings':'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.7 2.94-.09-.03a1.7 1.7 0 0 0-1.82.36 1.7 1.7 0 0 0-.62 1.3V22h-3.4v-.1a1.7 1.7 0 0 0-1.13-1.6 1.7 1.7 0 0 0-1.83.36l-.07.06-2.94-1.7.03-.09a1.7 1.7 0 0 0-.36-1.82 1.7 1.7 0 0 0-1.3-.62H4v-3.4h.1a1.7 1.7 0 0 0 1.6-1.13 1.7 1.7 0 0 0-.36-1.83l-.06-.07 1.7-2.94.09.03a1.7 1.7 0 0 0 1.82-.36 1.7 1.7 0 0 0 .62-1.3V5h3.4v.1a1.7 1.7 0 0 0 1.13 1.6 1.7 1.7 0 0 0 1.83-.36l.07-.06 2.94 1.7-.03.09a1.7 1.7 0 0 0 .36 1.82 1.7 1.7 0 0 0 1.3.62H20v3.4h-.1a1.7 1.7 0 0 0-.5 1.09Z"/>',
+'settings':'<path d="M10 2.8h4l.65 2.35a7.6 7.6 0 0 1 1.55.9l2.35-.7 2 3.45-1.75 1.7a7.8 7.8 0 0 1 0 1.8l1.75 1.7-2 3.45-2.35-.7a7.6 7.6 0 0 1-1.55.9L14 20h-4l-.65-2.35a7.6 7.6 0 0 1-1.55-.9l-2.35.7-2-3.45 1.75-1.7a7.8 7.8 0 0 1 0-1.8L3.45 8.8l2-3.45 2.35.7a7.6 7.6 0 0 1 1.55-.9L10 2.8Z"/><circle cx="12" cy="11.5" r="3"/>,
 'database-backup':'<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3m8-9v4M4 11v6c0 1.7 3.6 3 8 3m8-7v-2m-3 5 3-3 3 3"/>',
 'clipboard-list':'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5h6V2H9zM9 10h6m-6 4h6m-6 4h3"/>',
 'grid-2x2':'<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>',
@@ -1414,9 +1414,15 @@ body.gc-force-desktop .gc-dashboard-carousel{height:93px!important;min-height:93
 .nav-item{height:42px!important;min-height:42px!important;border-radius:9px!important}
 .bottom-item{height:48px!important}
 .gc-view-toggle{border-radius:10px!important;background:#fff!important}
-/* Cover the one-pixel anti-alias seam where the two fixed navigation bars meet. */
-@media(min-width:600px){body:not(.gc-force-mobile)::after{content:"";position:fixed;z-index:61;right:calc((100vw - min(1440px,100vw))/2 + var(--gc-final-rail) - 1px);bottom:calc(var(--gc-final-bottom) + var(--safe-bottom) - 1px);width:3px;height:3px;background:var(--gc-final-nav-bg);pointer-events:none}}
-@media(max-width:599px){body::after{content:"";position:fixed;z-index:61;right:calc(var(--gc-final-rail) - 1px);bottom:calc(var(--gc-final-bottom) + var(--safe-bottom) - 1px);width:3px;height:3px;background:var(--gc-final-nav-bg);pointer-events:none}}
+/* Extend the bottom navigation surface beneath the rail to form a continuous L-shaped corner. */
+.bottom-nav{overflow:visible!important}
+.bottom-nav::after{
+ content:"";position:absolute;top:-1px;right:calc(-1 * var(--gc-final-rail));
+ width:var(--gc-final-rail);height:calc(100% + 1px);
+ background:var(--gc-final-nav-bg);
+ border-top:1px solid var(--gc-final-nav-line);
+ pointer-events:none;
+}
 
 </style>
 <script id="gc-dashboard-render-guard">
