@@ -515,6 +515,7 @@ body.dashboard-active .content{width:100%!important;max-width:1180px!important;m
 <div class="app">
 <aside class="sidebar" id="sidebar" aria-label="القائمة الرئيسية">
  <div class="drawer-head"><div class="brand"><div class="brand-mark"><span>GO</span><small class="brand-connect">CONNECT</small></div><div><b>RADIUS Manager</b><small>إدارة شبكة Wi-Fi</small></div></div><button class="drawer-close" id="drawerClose" aria-label="إغلاق القائمة">×</button></div>
+ <button class="gc-view-toggle" id="gcViewToggle" type="button" aria-label="التبديل إلى عرض سطح المكتب" title="التبديل إلى عرض سطح المكتب"><span class="ico" data-icon="monitor"></span></button>
  
  <div class="nav-group"><div class="nav-title">خادم RADIUS</div>
  <button class="nav-item" data-page="server"><span class="ico" data-icon="server"></span><span>إعدادات الخادم</span></button><button class="nav-item" data-page="nas"><span class="ico" data-icon="router"></span><span>أجهزة NAS</span></button><button class="nav-item" data-page="auth"><span class="ico" data-icon="shield-check"></span><span>المصادقة</span></button><button class="nav-item" data-page="accounting"><span class="ico" data-icon="calculator"></span><span>المحاسبة</span></button></div>
@@ -601,10 +602,33 @@ const navIconPaths={
 'settings':'<path d="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/><path d="m19.4 15 .1.1 1.4 1.1-1.4 2.4-1.7-.6a8 8 0 0 1-1.6.9l-.3 1.8h-2.8l-.3-1.8a8 8 0 0 1-1.6-.9l-1.7.6-1.4-2.4 1.4-1.1a7 7 0 0 1 0-1.9l-1.4-1.1 1.4-2.4 1.7.6a8 8 0 0 1 1.6-.9l.3-1.8h2.8l.3 1.8a8 8 0 0 1 1.6.9l1.7-.6 1.4 2.4-1.4 1.1a7 7 0 0 1-.1 1.8Z"/>',
 'database-backup':'<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3m8-9v4M4 11v6c0 1.7 3.6 3 8 3m8-7v-2m-3 5 3-3 3 3"/>',
 'clipboard-list':'<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4.5h6V2H9zM9 10h6m-6 4h6m-6 4h3"/>',
-'grid-2x2':'<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>'
+'grid-2x2':'<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>',
+ 'monitor':'<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
+ 'smartphone':'<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>'
 };
 function paintNavIcons(){document.querySelectorAll('[data-icon]').forEach(el=>{const d=navIconPaths[el.dataset.icon];if(d)el.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`})}
-paintNavIcons();$$('#sidebar .nav-item').forEach(b=>{const label=b.querySelector('span:not(.ico)')?.textContent.trim()||b.dataset.page;b.title=label;b.setAttribute('aria-label',label)});$$('.bottom-item').forEach(b=>{const label=b.querySelector('span:not(.ico)')?.textContent.trim()||b.dataset.page;b.title=label;b.setAttribute('aria-label',label)});
+paintNavIcons();$('#sidebar .nav-item').forEach(b=>{const label=b.querySelector('span:not(.ico)')?.textContent.trim()||b.dataset.page;b.title=label;b.setAttribute('aria-label',label)});$('.bottom-item').forEach(b=>{const label=b.querySelector('span:not(.ico)')?.textContent.trim()||b.dataset.page;b.title=label;b.setAttribute('aria-label',label)});
+let gcDisplayMode='mobile';
+try{gcDisplayMode=localStorage.getItem('gc_display_mode')||(window.innerWidth>900?'desktop':'mobile')}catch(_){gcDisplayMode=window.innerWidth>900?'desktop':'mobile'}
+function applyGcDisplayMode(mode){
+ gcDisplayMode=mode==='desktop'?'desktop':'mobile';
+ document.body.classList.toggle('gc-force-desktop',gcDisplayMode==='desktop');
+ document.body.classList.toggle('gc-force-mobile',gcDisplayMode==='mobile');
+ const button=$('#gcViewToggle'),ico=button?.querySelector('.ico');
+ if(button&&ico){
+  const next=gcDisplayMode==='desktop'?'mobile':'desktop';
+  const label=next==='desktop'?'التبديل إلى عرض سطح المكتب':'التبديل إلى عرض الهاتف';
+  ico.dataset.icon=gcDisplayMode==='desktop'?'smartphone':'monitor';
+  button.title=label;button.setAttribute('aria-label',label);paintNavIcons();
+ }
+}
+applyGcDisplayMode(gcDisplayMode);
+$('#gcViewToggle')?.addEventListener('click',()=>{
+ const next=gcDisplayMode==='desktop'?'mobile':'desktop';
+ try{localStorage.setItem('gc_display_mode',next)}catch(_){}
+ applyGcDisplayMode(next);
+});
+
 let gcCarouselTimer=null;
 function initDashboardCarousel(){
  const track=$('#gcCarouselTrack'),dots=$$('#gcCarouselDots .gc-dot'),root=$('.gc-dashboard-carousel');
@@ -634,13 +658,13 @@ function go(p){currentPage=p;closeDrawer();render();window.scrollTo({top:0,behav
 async function bindPage(){let v=$('#view');v.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>actions[b.dataset.action]?.(b)));v.querySelectorAll('[data-page-link]').forEach(b=>b.onclick=()=>go(b.dataset.pageLink))}
 const pages={
 dashboard:async()=>{
- const data=await Promise.all(['nas','users','vouchers','sessions','accounting','authLogs'].map(all));
- const nas=data[0],users=data[1],vouchers=data[2],sessions=data[3],accounting=data[4],auth=data[5];
+ const data=await Promise.all(['users','vouchers','sessions','accounting','authLogs'].map(all));
+ const users=data[0],vouchers=data[1],sessions=data[2],accounting=data[3],auth=data[4];
  const n=v=>Number(v||0).toLocaleString('en-US',{maximumFractionDigits:0});
  const f1=v=>Number(v||0).toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:2});
  const icon=path=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+path+'"/></svg>';
  const packages=[
-  {price:100,count:279,hours:2,quota:.4,validity:2,color:'#6d91f2',className:'c100'},
+  {price:100,count:279,hours:2,quota:400/1024,validity:2,color:'#6d91f2',className:'c100'},
   {price:250,count:143,hours:4,quota:1,validity:4,color:'#25b9aa',className:'c250'},
   {price:500,count:51,hours:8,quota:2,validity:8,color:'#e9ae4f',className:'c500'}
  ];
@@ -648,16 +672,15 @@ dashboard:async()=>{
  const revenue=packages.reduce((a,p)=>a+p.count*p.price,0);
  const grantedGB=packages.reduce((a,p)=>a+p.count*p.quota,0);
  const grantedHours=packages.reduce((a,p)=>a+p.count*p.hours,0);
- const weeklyPackageSales=[[251,132,43],[263,138,46],[257,141,47],[269,139,48],[274,142,49],[271,145,50],[279,143,51]];
- const weeklyRevenue=weeklyPackageSales.map(row=>row[0]*100+row[1]*250+row[2]*500);
+ const weeklySalesFactors=[[.90,.91,.84],[.94,.96,.90],[.92,.99,.92],[.97,.95,.94],[.98,.98,.96],[.97,1.01,.98],[1,1,1]];
+ const weeklyPackageSales=weeklySalesFactors.map(factors=>packages.map((p,i)=>Math.max(1,Math.round(p.count*factors[i]))));
+ const weeklyRevenue=weeklyPackageSales.map(row=>row.reduce((sum,count,i)=>sum+count*packages[i].price,0));
  const previousRevenue=weeklyRevenue[5],growth=(revenue/previousRevenue-1)*100;
  const connected=sessions.filter(x=>x.status==='متصل');
  const currentSessions=sessions.length?connected.length:78;
  const totalUsers=users.length||1386;
  const totalVouchers=vouchers.length||2700;
  const availableVouchers=vouchers.length?vouchers.filter(x=>x.status==='متاح').length:2250;
- const activeNas=nas.length?nas.filter(x=>x.status==='نشط').length:8;
- const totalNas=nas.length||8,stoppedNas=Math.max(0,totalNas-activeNas);
  const todayStart=new Date();todayStart.setHours(0,0,0,0);
  const todayAccounting=accounting.filter(x=>(+x.startedAt||0)>=todayStart.getTime());
  const GB=1024*1024*1024;
@@ -669,12 +692,7 @@ dashboard:async()=>{
  const authFailed=recentAuth.length?recentAuth.filter(x=>x.result!=='مقبول').length:72;
  const authTotal=authSuccess+authFailed,authRate=authTotal?authSuccess/authTotal*100:0;
  const currentMbps=86.4,latency=24,maxSessions=124;
- const trafficHours=[5.4,3.8,9.6,18.2,28.4,39.6,61.2,72];
- const authHours=[
-  {label:'00–04',ok:25,fail:2},{label:'04–08',ok:35,fail:4},
-  {label:'08–12',ok:145,fail:9},{label:'12–16',ok:216,fail:14},
-  {label:'16–20',ok:388,fail:21},{label:'20–24',ok:405,fail:22}
- ];
+ const trafficHours=[.045,.04,.06,.09,.12,.17,.21,.265].map(weight=>trafficGB*weight);
  const weeklyLabels=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
  const lineSvg=(values,idName)=>{
   const w=620,h=170,p=15,max=Math.max.apply(null,values)*1.18;
@@ -687,8 +705,6 @@ dashboard:async()=>{
  const packageRows=packages.map((p,i)=>'<div class="gc-package-row"><span class="gc-package-marker" style="background:'+p.color+'"></span><div class="gc-package-main"><b>'+n(p.price)+' ريال</b><small>'+p.hours+' ساعات · '+(p.quota<1?'400 MB':p.quota+' GB')+' · صلاحية '+p.validity+' أيام</small></div><strong>'+n(p.count)+' <small>كرت</small></strong><span class="gc-package-revenue">'+n(p.count*p.price)+' ريال</span></div>').join('');
  const authSuccessPct=authTotal?authSuccess/authTotal*100:0,authFailedPct=authTotal?authFailed/authTotal*100:0;
   const authBars='<div class="gc-auth-24h"><div class="gc-auth-24h-track" role="img" aria-label="طلبات المصادقة خلال 24 ساعة: '+n(authSuccess)+' ناجحة و'+n(authFailed)+' فاشلة"><i style="width:'+authSuccessPct.toFixed(2)+'%"></i><em style="width:'+authFailedPct.toFixed(2)+'%"></em></div><div class="gc-auth-24h-axis"><span>00:00</span><span>24:00</span></div></div>';
- const nasList=nas.length?nas:Array.from({length:8},(_,i)=>({name:'NAS-'+String(i+1).padStart(2,'0'),status:'نشط'}));
- const nasRows=nasList.map((device,i)=>{const online=device.status==='نشط'||device.status==='متصل';return '<div class="gc-nas-row"><span class="gc-nas-symbol">'+icon('M4 5h16v5H4zM4 14h16v5H4z')+'</span><div><b>'+esc(device.name||('NAS-'+String(i+1).padStart(2,'0')))+'</b><small>'+(online?'متصل':'غير متصل')+'</small></div><i class="'+(online?'is-online':'is-offline')+'"></i></div>'}).join('');
  const slides=[
   {caption:'الأداء التجاري اليوم',title:'مبيعات كروت الإنترنت',value:n(sold),unit:'كرت',sub:n(revenue)+' ريال · متوسط الكرت '+n(revenue/sold)+' ريال',visual:'<div class="gc-hero-visual gc-hero-sales"><b>'+growth.toFixed(1)+'%</b><small>مقارنة بالأمس</small><i></i></div>'},
   {caption:'الحصص الممنوحة اليوم',title:'حجم البيانات المباعة',value:f1(grantedGB),unit:'GB',sub:n(grantedHours)+' ساعة استخدام موزعة على '+n(sold)+' كرت',visual:'<div class="gc-hero-visual gc-hero-ring" style="--hero-pct:100%"><b>3</b><small>باقات</small></div>'},
@@ -703,18 +719,16 @@ dashboard:async()=>{
   '<article class="gc-dark-kpi"><div class="gc-kpi-head"><span class="gc-kpi-icon">'+icon('M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M20 8v6m3-3h-6')+'</span><span>المستخدمون المسجلون</span></div><strong>'+n(totalUsers)+'</strong><small>حساب على الشبكة</small></article>',
   '<article class="gc-dark-kpi"><div class="gc-kpi-head"><span class="gc-kpi-icon">'+icon('M3 7.5A2.5 2.5 0 0 1 5.5 5h13A2.5 2.5 0 0 1 21 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5zM8 5v14')+'</span><span>مخزون الكروت المتاح</span></div><strong>'+n(availableVouchers)+'</strong><small>من '+n(totalVouchers)+' كرت · '+stockPct+'% متاح</small><div class="gc-mini-progress"><i style="width:'+stockPct+'%"></i></div></article>',
   '<article class="gc-dark-kpi"><div class="gc-kpi-head"><span class="gc-kpi-icon">'+icon('M3 12h4l3-8 4 16 3-8h4')+'</span><span>استهلاك البيانات اليوم</span></div><strong>'+f1(trafficGB)+' <em>GB</em></strong><small>تحميل '+f1(downGB)+' · رفع '+f1(upGB)+' GB</small></article>',
-  '<article class="gc-dark-kpi"><div class="gc-kpi-head"><span class="gc-kpi-icon">'+icon('M4 5h16v5H4zM4 14h16v5H4z')+'</span><span>أجهزة NAS المتصلة</span></div><strong>'+n(activeNas)+' <em>/ '+n(totalNas)+'</em></strong><small>'+n(stoppedNas)+' أجهزة غير متصلة</small></article>'
  ].join('');
  const trafficCard='<article class="gc-analytics-card gc-traffic-card"><div class="gc-card-heading"><div><span class="gc-card-kicker">NETWORK TRAFFIC</span><h3>حركة البيانات</h3></div><span class="gc-card-period">آخر 24 ساعة</span></div><div class="gc-chart-summary"><strong>'+f1(trafficGB)+' <em>GB</em></strong><span>إجمالي الاستهلاك</span></div>'+lineSvg(trafficHours,'gcTrafficFill')+'<div class="gc-chart-axis"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div><div class="gc-chart-legend"><span><i class="download"></i>تحميل '+f1(downGB)+' GB</span><span><i class="upload"></i>رفع '+f1(upGB)+' GB</span><b>'+f1(currentMbps)+' Mbps الآن</b></div></article>';
  const authCard='<article class="gc-analytics-card gc-auth-card"><div class="gc-card-heading"><div><span class="gc-card-kicker">RADIUS AUTH</span><h3>أداء المصادقة</h3></div><span class="gc-card-period">آخر 24 ساعة</span></div><div class="gc-chart-summary"><strong>'+n(authTotal)+'</strong><span>طلب مصادقة</span><b class="gc-auth-rate">'+f1(authRate)+'% نجاح</b></div><div class="gc-auth-rows">'+authBars+'</div><div class="gc-auth-foot"><span><i class="success-dot"></i>'+n(authSuccess)+' ناجحة</span><span><i class="failed-dot"></i>'+n(authFailed)+' مرفوضة</span></div></article>';
  const salesCard='<article class="gc-analytics-card gc-sales-card"><div class="gc-card-heading"><div><span class="gc-card-kicker">DAILY REVENUE</span><h3>إيرادات المبيعات</h3></div><span class="gc-card-period">آخر 7 أيام</span></div><div class="gc-chart-summary"><strong>'+n(revenue)+' <em>ريال</em></strong><span>'+n(sold)+' كرتاً اليوم</span></div>'+lineSvg(weeklyRevenue,'gcSalesFill')+'<div class="gc-chart-axis">'+weeklyLabels.map(x=>'<span>'+x+'</span>').join('')+'</div><div class="gc-sales-foot"><span>متوسط الإيراد اليومي</span><b>'+n(weeklyRevenue.reduce((a,b)=>a+b,0)/7)+' ريال</b></div></article>';
  const packageCard='<article class="gc-analytics-card gc-packages-card"><div class="gc-card-heading"><div><span class="gc-card-kicker">PACKAGE MIX</span><h3>توزيع الباقات</h3></div><span class="gc-card-period">مبيعات اليوم</span></div><div class="gc-package-overview"><div class="gc-donut" style="--p1:'+packageShares[0]+'%;--p2:'+packageShares[1]+'%;--p3:'+packageShares[2]+'%"><div><b>'+n(sold)+'</b><small>كرت مباع</small></div></div><div class="gc-package-legend"><div><i class="c100"></i><span>100 ريال</span><b>'+f1(packageShares[0])+'%</b></div><div><i class="c250"></i><span>250 ريال</span><b>'+f1(packageShares[1])+'%</b></div><div><i class="c500"></i><span>500 ريال</span><b>'+f1(packageShares[2])+'%</b></div></div></div><div class="gc-package-list">'+packageRows+'</div><div class="gc-package-total"><span>إجمالي الإيرادات</span><strong>'+n(revenue)+' ريال</strong><small>حصة البيانات '+f1(grantedGB)+' GB</small></div></article>';
- const nasCard='<article class="gc-analytics-card gc-nas-card"><div class="gc-card-heading"><div><span class="gc-card-kicker">ACCESS INFRASTRUCTURE</span><h3>أجهزة الشبكة NAS</h3></div><span class="gc-card-period">'+n(activeNas)+' / '+n(totalNas)+' متصل</span></div><div class="gc-nas-list">'+nasRows+'</div><div class="gc-nas-footer"><span><i class="success-dot"></i>متوسط الاستجابة '+n(latency)+' ms</span><span>انقطاعات اليوم <b>0</b></span></div></article>';
  return '<div class="gc-dashboard-page"><header class="gc-dashboard-heading"><div><span class="gc-eyebrow">GO CONNECT / RADIUS</span><h2>لوحة معلومات الشبكة</h2><p>'+today+'</p></div><div class="gc-network-state"><i></i><span>الشبكة مستقرة</span></div></header>'+
  '<section class="gc-dashboard-carousel" aria-label="المؤشرات السريعة"><div class="gc-carousel-track" id="gcCarouselTrack">'+slideHtml+'</div></section>'+
  '<div class="gc-carousel-dots" id="gcCarouselDots" aria-label="التنقل بين المؤشرات">'+Array.from({length:5},(_,i)=>'<button type="button" class="gc-dot '+(i===0?'active':'')+'" data-slide="'+i+'" aria-label="المؤشر '+(i+1)+'" aria-current="'+(i===0?'true':'false')+'"></button>').join('')+'</div>'+
  '<section class="gc-kpi-section"><div class="gc-section-title"><div><span>ملخص تشغيلي</span><h3>مؤشرات الشبكة</h3></div><small>نظرة سريعة</small></div><div class="gc-dark-kpis">'+kpis+'</div></section>'+
- '<section class="gc-analytics-grid">'+trafficCard+authCard+salesCard+packageCard+nasCard+'</section></div>';
+ '<section class="gc-analytics-grid">'+trafficCard+authCard+salesCard+packageCard+'</section></div>';
 },
 server:async()=>{let s=await get('settings','server')||{};return `${pageHead('إعدادات خادم RADIUS','قيم محلية قابلة للتحرير — غير مطبقة على خادم حقيقي')}<div class="notice">المنافذ الافتراضية: Authentication UDP 1812 وAccounting UDP 1813. تعديل القيم هنا يحفظها محلياً فقط.</div><div class="panel"><form id="serverForm"><div class="form-grid">${field('عنوان الخادم','address',s.address||'192.168.100.10')}${field('منفذ Authentication','authPort',s.authPort||1812,'number')}${field('منفذ Accounting','acctPort',s.acctPort||1813,'number')}${selectField('حالة الخدمة المعروضة','state',[{value:'محاكاة محلية',label:'محاكاة محلية'},{value:'غير متصل',label:'غير متصل'},{value:'متصل',label:'متصل (عرض فقط)'}],s.state||'محاكاة محلية')}${selectField('مصدر المصادقة','authSource',[{value:'قاعدة محلية',label:'قاعدة محلية'},{value:'FreeRADIUS',label:'FreeRADIUS (يتطلب تكاملاً)'},{value:'User Manager',label:'MikroTik User Manager (يتطلب تكاملاً)'}],s.authSource||'قاعدة محلية')}${selectField('المحاسبة','accounting',[{value:'مفعلة محلياً',label:'مفعلة محلياً'},{value:'معطلة',label:'معطلة'}],s.accounting||'مفعلة محلياً')}</div><div class="actions" style="margin-top:16px"><button class="btn primary">حفظ الإعدادات محلياً</button><button class="btn" type="button" id="testServer">اختبار الاتصال</button></div></form></div><div class="panel"><h3>إعدادات متقدمة</h3><div class="quick-grid"><div class="quick"><b>قاعدة البيانات</b><span>IndexedDB داخل هذا المتصفح</span></div><div class="quick"><b>السجلات</b><span>مصادقة ومحاسبة وعمليات محلية</span></div><div class="quick"><b>الأمان</b><span>لا توجد أسرار اتصال فعلية مخزنة</span></div></div></div>`},
 nas:async()=>{let a=await all('nas');return `${pageHead('أجهزة NAS','إدارة أجهزة MikroTik أو أي NAS مسجل',`<button class="btn primary" data-action="addNas">＋ إضافة جهاز</button>`)}${searchBar('ابحث بالاسم أو IP أو النوع')}<div id="dataTable">${table(['اسم الجهاز','عنوان IP','النوع','الموقع / الوصف','Shared Secret','الحالة','تاريخ الإضافة','إجراءات'],a.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.ip)}</td><td>${esc(x.type)}</td><td>${esc(x.location||'—')}</td><td><span class="secret">••••••••</span> <button class="btn small" data-action="revealSecret" data-id="${x.id}">إظهار</button></td><td>${status(x.status)}</td><td>${fmt(x.createdAt)}</td><td><button class="btn small" data-action="editNas" data-id="${x.id}">تعديل</button> <button class="btn small danger" data-action="deleteNas" data-id="${x.id}">حذف</button></td></tr>`))}</div>`},
@@ -1273,6 +1287,36 @@ body.dashboard-active .content{width:100%!important;max-width:1160px!important;m
 .gc-auth-24h{display:flex;flex-direction:column;gap:0;margin-top:12px}.gc-auth-24h-track{display:flex;width:100%;height:13px;overflow:hidden;border-radius:20px;background:#273444;gap:2px}.gc-auth-24h-track i{display:block;min-width:2px;height:100%;background:#6d91f2;border-radius:20px 0 0 20px}.gc-auth-24h-track em{display:block;min-width:2px;height:100%;background:#d77d75;border-radius:0 20px 20px 0;font-style:normal}.gc-auth-24h-axis{display:flex;justify-content:space-between;margin-top:5px;color:#8294a8;font-size:8px;direction:ltr}
 </style>
 
+<style id="gc-approved-final-layout-v1">
+:root{--gc-final-rail:56px;--gc-final-bottom:58px;--gc-final-nav-bg:#f5f7fa;--gc-final-nav-line:#dce4ec;--gc-final-nav-text:#40556a;--gc-final-nav-muted:#74869a;--gc-final-nav-active:#147c86}
+html,body{min-height:100%;overscroll-behavior-x:contain}body{padding:0!important;overflow-x:auto!important}
+.app{position:relative!important;width:100%!important;max-width:1440px!important;min-height:100dvh!important;margin:0 auto!important;border-radius:0!important;overflow:visible!important;box-shadow:none!important}
+.sidebar{position:fixed!important;top:0!important;right:calc((100vw - min(1440px,100vw))/2)!important;bottom:calc(var(--gc-final-bottom) + var(--safe-bottom))!important;left:auto!important;width:var(--gc-final-rail)!important;min-width:var(--gc-final-rail)!important;height:auto!important;max-height:none!important;padding:9px 5px 8px!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:7px!important;overflow-x:hidden!important;overflow-y:auto!important;background:var(--gc-final-nav-bg)!important;color:var(--gc-final-nav-text)!important;border-left:1px solid var(--gc-final-nav-line)!important;box-shadow:0 2px 18px rgba(24,45,67,.06)!important;transform:none!important;transition:none!important;z-index:60!important}
+.drawer-head{display:block!important;min-height:0!important}.brand{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;padding:3px 0 9px!important;margin:0!important;border:0!important;border-bottom:1px solid var(--gc-final-nav-line)!important}
+.brand-mark{display:grid!important;place-items:center!important;width:34px!important;height:34px!important;min-width:34px!important;padding:0!important;border:0!important;border-radius:9px!important;background:#e7eff3!important;color:#284a5b!important;font-size:14px!important;font-weight:800!important;box-shadow:none!important}
+.brand-mark .brand-connect,.brand>div:not(.brand-mark),.drawer-close,.nav-title,.nav-item>span:not(.ico),.side-foot{display:none!important}
+.gc-view-toggle{display:grid!important;place-items:center!important;width:40px!important;height:38px!important;min-height:38px!important;margin:0 auto 3px!important;padding:0!important;border:1px solid var(--gc-final-nav-line)!important;border-radius:9px!important;background:#fff!important;color:var(--gc-final-nav-text)!important}.gc-view-toggle .ico{display:grid!important;place-items:center!important;width:22px!important;height:22px!important}
+.gc-view-toggle .ico svg{width:21px!important;height:21px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+.nav-group{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:3px!important;width:100%!important;margin:0!important;padding:5px 0 7px!important;border:0!important;border-bottom:1px solid var(--gc-final-nav-line)!important}
+.nav-item{position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:39px!important;min-height:39px!important;margin:0!important;padding:0!important;border:0!important;border-radius:9px!important;background:transparent!important;color:var(--gc-final-nav-text)!important;box-shadow:none!important;text-align:center!important}
+.nav-item .ico,.bottom-item .ico{display:grid!important;place-items:center!important;width:22px!important;height:22px!important;min-width:22px!important;margin:0!important;padding:0!important;background:transparent!important;color:currentColor!important}
+.nav-item .ico svg,.bottom-item .ico svg{display:block!important;width:21px!important;height:21px!important;fill:none!important;stroke:currentColor!important;stroke-width:1.8!important;stroke-linecap:round!important;stroke-linejoin:round!important}
+.nav-item:hover{background:#edf2f6!important;color:#263f54!important}.nav-item.active{background:#e7f2f3!important;color:var(--gc-final-nav-active)!important}.nav-item.active:before{content:""!important;position:absolute!important;right:-5px!important;top:8px!important;bottom:8px!important;width:3px!important;border-radius:3px!important;background:var(--gc-final-nav-active)!important}
+.main{width:100%!important;min-width:0!important;padding-right:var(--gc-final-rail)!important;padding-top:58px!important;padding-bottom:calc(var(--gc-final-bottom) + 9px + var(--safe-bottom))!important}body.dashboard-active .main{padding-top:0!important}
+.topbar{position:sticky!important;top:0!important;right:auto!important;left:auto!important;width:auto!important;height:58px!important;z-index:44!important}body.dashboard-active .topbar{display:none!important}.topbar-menu{display:none!important}
+.bottom-nav{position:fixed!important;right:calc((100vw - min(1440px,100vw))/2 + var(--gc-final-rail))!important;left:calc((100vw - min(1440px,100vw))/2)!important;bottom:0!important;width:calc(min(1440px,100vw) - var(--gc-final-rail))!important;height:calc(var(--gc-final-bottom) + var(--safe-bottom))!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;align-items:center!important;gap:0!important;padding:3px 6px calc(3px + var(--safe-bottom))!important;background:rgba(247,249,252,.98)!important;border:0!important;border-top:1px solid var(--gc-final-nav-line)!important;border-radius:0!important;box-shadow:0 -4px 18px rgba(25,44,64,.05)!important;backdrop-filter:blur(12px)!important;z-index:55!important}
+.bottom-item,.bottom-nav .bottom-item:last-child{position:relative!important;right:auto!important;bottom:auto!important;width:100%!important;height:48px!important;min-width:0!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:0!important;margin:0!important;padding:3px 1px!important;border:0!important;border-radius:8px!important;background:transparent!important;color:var(--gc-final-nav-muted)!important;font-size:0!important;font-weight:600!important;box-shadow:none!important}
+.bottom-item>span:not(.ico){display:none!important}.bottom-item.active{background:#e7f2f3!important;color:var(--gc-final-nav-active)!important}.bottom-item.active:before{display:none!important}.bottom-item.active .ico{color:var(--gc-final-nav-active)!important}
+.drawer-backdrop{display:none!important;opacity:0!important;visibility:hidden!important}
+.gc-analytics-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;align-items:start!important;grid-auto-rows:max-content!important}.gc-analytics-card{height:max-content!important;min-height:0!important;align-self:start!important}.gc-dark-kpis{grid-template-columns:repeat(3,minmax(0,1fr))!important;align-items:start!important}
+@media(max-width:960px){.gc-analytics-grid{grid-template-columns:minmax(0,1fr)!important}.gc-dark-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+@media(max-width:420px){:root{--gc-final-rail:52px;--gc-final-bottom:58px}.gc-dashboard-carousel{height:124px!important;min-height:124px!important}.gc-dark-kpi{min-height:84px!important}}
+body.gc-force-desktop .app{width:max(1160px,min(1440px,100vw))!important;max-width:none!important;margin:0 auto!important}body.gc-force-desktop .main{width:100%!important;min-width:0!important}
+body.gc-force-desktop .gc-analytics-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}body.gc-force-desktop .gc-dark-kpis{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+@media(min-width:961px){body.gc-force-mobile .app{width:480px!important;max-width:100%!important;margin:0 auto!important}body.gc-force-mobile .sidebar{right:calc((100vw - min(480px,100vw))/2)!important}body.gc-force-mobile .main{width:100%!important;min-width:0!important}body.gc-force-mobile .bottom-nav{right:calc((100vw - min(480px,100vw))/2 + var(--gc-final-rail))!important;left:calc((100vw - min(480px,100vw))/2)!important;width:calc(min(480px,100vw) - var(--gc-final-rail))!important}body.gc-force-mobile .gc-analytics-grid{grid-template-columns:minmax(0,1fr)!important}body.gc-force-mobile .gc-dark-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+body.gc-force-desktop .gc-dashboard-carousel{height:124px!important;min-height:124px!important}
+@media(prefers-reduced-motion:reduce){.gc-view-toggle,.nav-item,.bottom-item{transition:none!important}}
+</style>
 <script id="gc-dashboard-render-guard">
 /* Recover the dashboard if local database initialization is delayed or blocked by the browser. */
 window.addEventListener('load',()=>{setTimeout(()=>{if(!document.querySelector('.gc-dashboard-page'))window.__gcForceDashboard?.()},1200)});
