@@ -1,4 +1,4 @@
-const CACHE_NAME = 'go-connect-radius-shell-v14';
+const CACHE_NAME = 'go-connect-radius-shell-v15';
 const APP_SHELL = [
   './',
   './index.html',
