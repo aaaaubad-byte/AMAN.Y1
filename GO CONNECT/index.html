@@ -684,29 +684,37 @@ dashboard:async()=>{
  const totalVouchers=vouchers.length||36500;
  const availableVouchers=vouchers.length?vouchers.filter(x=>x.status==='متاح').length:12500;
  const usedVouchers=vouchers.length?vouchers.filter(x=>['مستخدم','نشط','منتهي'].includes(x.status)).length:24000;
- const todayStart=new Date();todayStart.setHours(0,0,0,0);
- const todayAccounting=accounting.filter(x=>(+x.startedAt||0)>=todayStart.getTime());
- const GB=1024*1024*1024;
- const measuredDown=todayAccounting.reduce((a,x)=>a+(+x.download||0),0)/GB;
- const measuredUp=todayAccounting.reduce((a,x)=>a+(+x.upload||0),0)/GB;
- const modeledTraffic=Math.max(24,currentSessions*.42);
- const trafficGB=todayAccounting.length?measuredDown+measuredUp:modeledTraffic;
- const downGB=todayAccounting.length?measuredDown:trafficGB*.78;
- const upGB=todayAccounting.length?measuredUp:trafficGB*.22;
+ const trafficGB=235.5;
+ const downGB=Number((trafficGB*.8).toFixed(2));
+ const upGB=Number((trafficGB-downGB).toFixed(2));
  const recentAuth=auth.filter(x=>(+x.at||0)>=Date.now()-86400000);
  const authSuccess=recentAuth.length?recentAuth.filter(x=>x.result==='مقبول').length:1214;
  const authFailed=recentAuth.length?recentAuth.filter(x=>x.result!=='مقبول').length:72;
  const authTotal=authSuccess+authFailed,authRate=authTotal?authSuccess/authTotal*100:0;
- const currentMbps=Math.min(46.2,Math.max(8,12+currentSessions*.31)),latency=38,maxSessions=124;
- const hourlyWeights=[.018,.014,.012,.010,.012,.018,.028,.040,.050,.055,.060,.065,.070,.075,.085,.095,.105,.110,.105,.090,.070,.055,.040,.028];
+ const currentMbps=Math.min(46.2,Math.max(8,12+currentSessions*.31)),latency=38,maxSessions=Math.max(124,currentSessions);
+ const hourlyWeights=[.012,.010,.009,.008,.009,.012,.020,.028,.035,.040,.045,.048,.052,.058,.066,.078,.085,.088,.082,.074,.061,.048,.035,.025];
  const hourlyWeightTotal=hourlyWeights.reduce((a,b)=>a+b,0);
- const trafficHours=hourlyWeights.map(weight=>trafficGB*weight/hourlyWeightTotal);
+ const hourlyUsage=hourlyWeights.map(weight=>trafficGB*weight/hourlyWeightTotal);
+ const trafficHours=hourlyUsage.concat(hourlyUsage[0]);
  const weeklyLabels=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
  const barSvg=(values,idName)=>{
   const w=620,h=150,left=18,right=18,top=12,bottom=12,max=Math.max(1,...values)*1.18,slot=(w-left-right)/values.length,bw=Math.min(42,slot*.48);
   const bars=values.map((v,i)=>{const bh=Math.max(3,v/max*(h-top-bottom)),x=left+i*slot+(slot-bw)/2,y=h-bottom-bh;return '<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="5" fill="'+(i===values.length-1?'#35b8aa':'#6687d8')+'" opacity="'+(i===values.length-1?'1':'.78')+'"><title>'+weeklyLabels[i]+': '+n(v)+'</title></rect>';}).join('');
   return '<svg class="gc-line-svg gc-bar-svg" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" role="img" aria-label="أعمدة الأداء خلال الأسبوع"><path d="M18 35H602M18 75H602M18 115H602" stroke="#273443" stroke-dasharray="3 5" fill="none"/>'+bars+'</svg>';
  };
+ const miniBars=values=>{
+  const max=Math.max(1,...values);
+  return '<div class="gc-hero-mini gc-hero-mini-bars" role="img" aria-label="اتجاه المبيعات الأسبوعية">'+values.map((v,i)=>'<i style="height:'+Math.max(12,v/max*100).toFixed(1)+'%;opacity:'+(i===values.length-1?'1':'.72')+'"></i>').join('')+'</div>';
+ };
+ const miniLine=values=>{
+  const w=112,h=38,p=3,min=Math.min(...values),max=Math.max(...values),range=Math.max(1,max-min);
+  const pts=values.map((v,i)=>[p+i*(w-2*p)/(values.length-1),h-p-((v-min)/range)*(h-2*p)]);
+  const path=pts.map((q,i)=>(i?'L':'M')+q[0].toFixed(1)+' '+q[1].toFixed(1)).join(' ');
+  return '<div class="gc-hero-mini gc-hero-mini-line" role="img" aria-label="منحنى الأداء"><svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none"><path d="'+path+'" fill="none" stroke="#8de0d5" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+pts[pts.length-1][0].toFixed(1)+'" cy="'+pts[pts.length-1][1].toFixed(1)+'" r="2.8" fill="#d8fff7"/></svg></div>';
+ };
+ const miniAuth='<div class="gc-hero-mini gc-hero-mini-auth" role="img" aria-label="نسبة المصادقة الناجحة '+f1(authRate)+' بالمئة"><div><i style="width:'+authSuccessPct.toFixed(2)+'%"></i><em style="width:'+authFailedPct.toFixed(2)+'%"></em></div><b>'+Math.round(authRate)+'%</b></div>';
+ const sessionTrend=[.35,.32,.29,.27,.28,.31,.36,.42,.48,.54,.59,.64,.70,.77,.84,.93,1,.96,.91,.85,.78,.70,.63,currentSessions/maxSessions].map(v=>Math.round(v*maxSessions));
+ const speedTrend=[12,10,9,11,13,16,18,21,24,28,31,34,37,40,43,45,46.2,44,42,39,37,35,34,currentMbps].map(v=>Math.min(46.2,v));
  const lineSvg=(values,idName)=>{
   const w=620,h=170,p=15,max=Math.max.apply(null,values)*1.18;
   const pts=values.map((v,i)=>[p+i*(w-2*p)/(values.length-1),h-p-v/max*(h-2*p)]);
@@ -719,11 +727,11 @@ dashboard:async()=>{
  const authSuccessPct=authTotal?authSuccess/authTotal*100:0,authFailedPct=authTotal?authFailed/authTotal*100:0;
   const authBars='<div class="gc-auth-24h"><div class="gc-auth-24h-track" role="img" aria-label="طلبات المصادقة خلال 24 ساعة: '+n(authSuccess)+' ناجحة و'+n(authFailed)+' فاشلة"><i style="width:'+authSuccessPct.toFixed(2)+'%"></i><em style="width:'+authFailedPct.toFixed(2)+'%"></em></div><div class="gc-auth-24h-axis"><span>00:00</span><span>24:00</span></div></div>';
  const slides=[
-  {caption:'الأداء التجاري اليوم',title:'مبيعات كروت الإنترنت',value:n(sold),unit:'كرت',sub:n(revenue)+' ريال · متوسط الكرت '+n(revenue/sold)+' ريال',visual:'<div class="gc-hero-visual gc-hero-sales"><b>'+growth.toFixed(1)+'%</b><small>مقارنة بالأمس</small><i></i></div>'},
-  {caption:'الحصص الممنوحة اليوم',title:'حجم البيانات المباعة',value:f1(grantedGB),unit:'GB',sub:n(grantedHours)+' ساعة استخدام موزعة على '+n(sold)+' كرت',visual:'<div class="gc-hero-visual gc-hero-ring" style="--hero-pct:100%"><b>3</b><small>باقات</small></div>'},
-  {caption:'آخر 24 ساعة',title:'طلبات المصادقة',value:n(authTotal),unit:'طلب',sub:n(authSuccess)+' ناجحة · '+n(authFailed)+' مرفوضة · نجاح '+f1(authRate)+'%',visual:'<div class="gc-hero-visual gc-hero-ring" style="--hero-pct:'+authRate+'%"><b>'+Math.round(authRate)+'%</b><small>نجاح</small></div>'},
-  {caption:'الحمل على الشبكة',title:'ذروة الجلسات المتزامنة',value:n(maxSessions),unit:'جلسة',sub:n(currentSessions)+' جلسة نشطة الآن',visual:'<div class="gc-hero-visual gc-hero-ring" style="--hero-pct:'+(currentSessions/maxSessions*100)+'%"><b>'+Math.round(currentSessions/maxSessions*100)+'%</b><small>من الذروة</small></div>'},
-  {caption:'جودة الاتصال',title:'معدل النقل والاستجابة',value:f1(currentMbps),unit:'Mbps',sub:'متوسط زمن الاستجابة '+n(latency)+' ms',visual:'<div class="gc-hero-visual gc-hero-pulse">'+icon('M2 12h4l3-7 5 14 3-7h5')+'<small>نقل البيانات</small></div>'}
+  {caption:'الأداء التجاري اليوم',title:'مبيعات كروت الإنترنت',value:n(sold),unit:'كرت',sub:n(revenue)+' ريال · متوسط الكرت '+f1(revenue/sold)+' ريال',visual:miniBars(weeklySold)},
+  {caption:'استهلاك آخر 24 ساعة',title:'حركة البيانات',value:f1(trafficGB),unit:'GB',sub:'تحميل '+f1(downGB)+' GB · رفع '+f1(upGB)+' GB',visual:miniLine(trafficHours.slice(0,24))},
+  {caption:'آخر 24 ساعة',title:'طلبات المصادقة',value:n(authTotal),unit:'طلب',sub:n(authSuccess)+' ناجحة · '+n(authFailed)+' فاشلة',visual:miniAuth},
+  {caption:'نشاط الجلسات',title:'الجلسات المتزامنة',value:n(currentSessions),unit:'جلسة',sub:'ذروة الفترة '+n(maxSessions)+' جلسة',visual:miniLine(sessionTrend)},
+  {caption:'أداء الاتصال',title:'سرعة النقل اللحظية',value:f1(currentMbps),unit:'Mbps',sub:'زمن الاستجابة '+n(latency)+' ms · حد العرض 46.2 Mbps',visual:miniLine(speedTrend)}
  ];
  const slideHtml=slides.map((x,i)=>'<article class="gc-slide '+(i===0?'is-active':'')+'"><div class="gc-hero-copy"><small>'+x.caption+'</small><h3>'+x.title+'</h3><strong class="gc-hero-value">'+x.value+' <em>'+x.unit+'</em></strong><span class="gc-hero-sub">'+x.sub+'</span></div>'+x.visual+'<span class="gc-slide-index">0'+(i+1)+' / 05</span></article>').join('');
  const stockPct=totalVouchers?Math.round(availableVouchers/totalVouchers*100):0;
@@ -733,7 +741,7 @@ dashboard:async()=>{
   '<article class="gc-dark-kpi"><div class="gc-kpi-head"><span class="gc-kpi-icon">'+icon('M3 7.5A2.5 2.5 0 0 1 5.5 5h13A2.5 2.5 0 0 1 21 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5zM8 5v14')+'</span><span>مخزون الكروت المتاح</span></div><strong>'+n(availableVouchers)+'</strong><small>من '+n(totalVouchers)+' كرت · '+stockPct+'% متاح</small><div class="gc-mini-progress"><i style="width:'+stockPct+'%"></i></div></article>',
   '<article class="gc-dark-kpi"><div class="gc-kpi-head"><span class="gc-kpi-icon">'+icon('M3 12h4l3-8 4 16 3-8h4')+'</span><span>استهلاك البيانات اليوم</span></div><strong>'+f1(trafficGB)+' <em>GB</em></strong><small>تحميل '+f1(downGB)+' · رفع '+f1(upGB)+' GB</small></article>',
  ].join('');
- const trafficCard='<article class="gc-analytics-card gc-traffic-card"><div class="gc-card-heading"><div><span class="gc-card-kicker">NETWORK TRAFFIC</span><h3>حركة البيانات</h3></div><span class="gc-card-period">آخر 24 ساعة</span></div><div class="gc-chart-summary"><strong>'+f1(trafficGB)+' <em>GB</em></strong><span>إجمالي الاستهلاك</span></div>'+lineSvg(trafficHours,'gcTrafficFill')+'<div class="gc-chart-axis"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div><div class="gc-chart-legend"><span><i class="download"></i>تحميل '+f1(downGB)+' GB</span><span><i class="upload"></i>رفع '+f1(upGB)+' GB</span><b>'+f1(currentMbps)+' Mbps الآن</b></div></article>';
+ const trafficCard='<article class="gc-analytics-card gc-traffic-card"><div class="gc-card-heading"><div><span class="gc-card-kicker">NETWORK TRAFFIC</span><h3>حركة البيانات</h3></div><span class="gc-card-period">آخر 24 ساعة</span></div><div class="gc-chart-summary"><strong>'+f1(trafficGB)+' <em>GB</em></strong><span>إجمالي الاستهلاك</span></div>'+lineSvg(trafficHours,'gcTrafficFill')+'<div class="gc-chart-axis gc-traffic-axis"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div><div class="gc-chart-legend"><span><i class="download"></i>تحميل '+f1(downGB)+' GB</span><span><i class="upload"></i>رفع '+f1(upGB)+' GB</span><b>'+f1(currentMbps)+' Mbps الآن</b></div></article>';
  const revenueTodayCard='<article class="gc-analytics-card gc-revenue-today"><div class="gc-card-heading"><div><span class="gc-card-kicker">TODAY REVENUE</span><h3>إيرادات اليوم</h3></div><span class="gc-card-period">اليوم</span></div><div class="gc-chart-summary"><strong>'+n(revenue)+' <em>ريال</em></strong><span>'+n(sold)+' كرتاً مباعاً</span></div><div class="gc-revenue-breakdown"><span>متوسط قيمة الكرت</span><b>'+n(revenue/Math.max(1,sold))+' ريال</b></div></article>';
  const revenueWeekCard='<article class="gc-analytics-card gc-revenue-week"><div class="gc-card-heading"><div><span class="gc-card-kicker">WEEKLY REVENUE</span><h3>إيرادات الأسبوع</h3></div><span class="gc-card-period">آخر 7 أيام</span></div><div class="gc-chart-summary"><strong>'+n(weeklyRevenueTotal)+' <em>ريال</em></strong><span>متوسط يومي '+n(weeklyRevenueTotal/7)+' ريال</span></div>'+barSvg(weeklyRevenue,'gcWeeklyRevenue')+'<div class="gc-chart-axis">'+weeklyLabels.map(x=>'<span>'+x+'</span>').join('')+'</div></article>';
  const salesWeekCard='<article class="gc-analytics-card gc-sales-card"><div class="gc-card-heading"><div><span class="gc-card-kicker">WEEKLY SALES</span><h3>مبيعات الكروت</h3></div><span class="gc-card-period">آخر 7 أيام</span></div><div class="gc-chart-summary"><strong>'+n(weeklySalesTotal)+' <em>كرت</em></strong><span>متوسط '+n(weeklySalesTotal/7)+' كرت يومياً</span></div>'+barSvg(weeklySold,'gcWeeklySales')+'<div class="gc-chart-axis">'+weeklyLabels.map(x=>'<span>'+x+'</span>').join('')+'</div></article>';
@@ -1360,6 +1368,39 @@ body.gc-force-desktop .gc-dashboard-carousel{height:93px!important;min-height:93
 .gc-package-legend>div b{color:#e5edf6!important;font-size:10px!important;white-space:nowrap}
 .gc-package-list,.gc-package-total{display:none!important}
 @media(max-width:520px){.gc-package-overview{justify-content:flex-start!important;gap:18px!important}.gc-package-legend>div{font-size:9px!important}.gc-bar-svg{height:100px!important}}
+
+/* Carousel charts: flat, open mini-visualizations instead of circular/bubbled widgets. */
+.gc-dashboard-carousel:after,.gc-slide:after{display:none!important;content:none!important}
+.gc-slide{padding:8px 14px!important;gap:10px!important;align-items:center!important}
+.gc-hero-copy{gap:1px!important;min-width:0!important}
+.gc-hero-copy small{font-size:8px!important;line-height:1.2!important;color:#b4d8dc!important}
+.gc-hero-copy h3{font-size:12px!important;line-height:1.25!important}
+.gc-hero-value{font-size:21px!important;line-height:1.12!important}
+.gc-hero-value em{font-size:10px!important}
+.gc-hero-sub{font-size:8px!important;line-height:1.25!important;color:#c0d0da!important;white-space:normal!important}
+.gc-hero-visual{display:none!important}
+.gc-hero-mini{position:relative!important;z-index:2!important;display:flex!important;flex:0 0 82px!important;width:82px!important;min-width:70px!important;height:38px!important;align-items:center!important;justify-content:center!important;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;backdrop-filter:none!important}
+.gc-hero-mini-bars{display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr))!important;align-items:end!important;gap:4px!important;height:34px!important;border-bottom:1px solid rgba(222,245,246,.35)!important}
+.gc-hero-mini-bars i{display:block!important;width:100%!important;min-height:4px!important;border-radius:2px 2px 0 0!important;background:linear-gradient(180deg,#a6e8dc,#5c9ec0)!important}
+.gc-hero-mini-line svg{display:block!important;width:100%!important;height:38px!important;overflow:visible!important}
+.gc-hero-mini-auth{flex-direction:column!important;gap:7px!important}
+.gc-hero-mini-auth>div{display:flex!important;width:100%!important;height:8px!important;overflow:hidden!important;border-radius:3px!important;background:rgba(255,255,255,.12)!important}
+.gc-hero-mini-auth i{display:block!important;height:100%!important;background:#54c7a2!important}
+.gc-hero-mini-auth em{display:block!important;height:100%!important;background:#d88783!important}
+.gc-hero-mini-auth b{align-self:flex-end!important;color:#e5f4f4!important;font-size:11px!important}
+.gc-traffic-axis{direction:ltr!important;display:flex!important;justify-content:space-between!important;align-items:center!important;gap:8px!important;width:100%!important;margin-top:5px!important;white-space:nowrap!important}
+.gc-traffic-axis span{flex:0 0 auto!important;min-width:0!important;text-align:center!important;font-size:9px!important;letter-spacing:.15px!important}
+.gc-traffic-card .gc-line-svg{height:126px!important}
+@media(max-width:520px){
+ .gc-slide{padding:7px 10px!important;gap:7px!important}
+ .gc-hero-mini{flex-basis:68px!important;width:68px!important;min-width:62px!important;height:34px!important}
+ .gc-hero-mini-line svg{height:34px!important}
+ .gc-hero-value{font-size:19px!important}
+ .gc-hero-copy h3{font-size:11px!important}
+ .gc-hero-sub{font-size:7.5px!important}
+ .gc-traffic-axis{gap:5px!important}
+ .gc-traffic-axis span{font-size:8px!important}
+}
 </style>
 <script id="gc-dashboard-render-guard">
 /* Recover the dashboard if local database initialization is delayed or blocked by the browser. */
