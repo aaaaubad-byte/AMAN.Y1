@@ -691,6 +691,7 @@ dashboard:async()=>{
  const authSuccess=recentAuth.length?recentAuth.filter(x=>x.result==='مقبول').length:1214;
  const authFailed=recentAuth.length?recentAuth.filter(x=>x.result!=='مقبول').length:72;
  const authTotal=authSuccess+authFailed,authRate=authTotal?authSuccess/authTotal*100:0;
+ const authSuccessPct=authTotal?authSuccess/authTotal*100:0,authFailedPct=authTotal?authFailed/authTotal*100:0;
  const currentMbps=Math.min(46.2,Math.max(8,12+currentSessions*.31)),latency=38,maxSessions=Math.max(124,currentSessions);
  const hourlyWeights=[.012,.010,.009,.008,.009,.012,.020,.028,.035,.040,.045,.048,.052,.058,.066,.078,.085,.088,.082,.074,.061,.048,.035,.025];
  const hourlyWeightTotal=hourlyWeights.reduce((a,b)=>a+b,0);
@@ -724,7 +725,6 @@ dashboard:async()=>{
  };
  const packageShares=packages.map(p=>p.count/sold*100);
  const packageRows=packages.map((p,i)=>'<div class="gc-package-row"><span class="gc-package-marker" style="background:'+p.color+'"></span><div class="gc-package-main"><b>'+n(p.price)+' ريال</b><small>'+p.hours+' ساعات · '+(p.quota<1?'400 MB':p.quota+' GB')+' · صلاحية '+p.validity+' أيام</small></div><strong>'+n(p.count)+' <small>كرت</small></strong><span class="gc-package-revenue">'+n(p.count*p.price)+' ريال</span></div>').join('');
- const authSuccessPct=authTotal?authSuccess/authTotal*100:0,authFailedPct=authTotal?authFailed/authTotal*100:0;
   const authBars='<div class="gc-auth-24h"><div class="gc-auth-24h-track" role="img" aria-label="طلبات المصادقة خلال 24 ساعة: '+n(authSuccess)+' ناجحة و'+n(authFailed)+' فاشلة"><i style="width:'+authSuccessPct.toFixed(2)+'%"></i><em style="width:'+authFailedPct.toFixed(2)+'%"></em></div><div class="gc-auth-24h-axis"><span>00:00</span><span>24:00</span></div></div>';
  const slides=[
   {caption:'الأداء التجاري اليوم',title:'مبيعات كروت الإنترنت',value:n(sold),unit:'كرت',sub:n(revenue)+' ريال · متوسط الكرت '+f1(revenue/sold)+' ريال',visual:miniBars(weeklySold)},
