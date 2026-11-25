@@ -729,7 +729,7 @@ dashboard:async()=>{
  const slides=[
   {caption:'',title:'مبيعات اليوم',value:n(sold),unit:'كرت',sub:'',visual:miniBars(weeklySold)},
   {caption:'استهلاك آخر 24 ساعة',title:'حركة البيانات',value:f1(trafficGB),unit:'GB',sub:'تحميل '+f1(downGB)+' GB · رفع '+f1(upGB)+' GB',visual:miniLine(trafficHours.slice(0,24))},
-  {caption:'آخر 24 ساعة',title:'طلبات المصادقة',value:n(authTotal),unit:'طلب',sub:n(authSuccess)+' ناجحة · '+n(authFailed)+' فاشلة',visual:miniAuth},
+  {caption:'آخر 24 ساعة',title:'معدل نجاح المصادقة',value:f1(authRate),unit:'%',sub:n(authSuccess)+' ناجحة · '+n(authFailed)+' مرفوضة',visual:miniAuth},
   {caption:'نشاط الجلسات',title:'الجلسات المتزامنة',value:n(currentSessions),unit:'جلسة',sub:'ذروة الفترة '+n(maxSessions)+' جلسة',visual:miniLine(sessionTrend)},
   {caption:'أداء الاتصال',title:'سرعة النقل اللحظية',value:f1(currentMbps),unit:'Mbps',sub:'زمن الاستجابة '+n(latency)+' ms · حد العرض 46.2 Mbps',visual:miniLine(speedTrend)}
  ];
