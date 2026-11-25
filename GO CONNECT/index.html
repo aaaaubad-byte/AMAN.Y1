@@ -500,6 +500,16 @@ body.dashboard-active .content{width:100%!important;max-width:1180px!important;m
 }
 </style>
 
+
+<meta name="theme-color" content="#102d3b">
+<meta name="application-name" content="GO CONNECT">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="GO CONNECT">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
 </head>
 <body>
 <div class="app">
@@ -929,6 +939,17 @@ document.querySelectorAll('.nav-item,.bottom-item').forEach(button=>{
   button.setAttribute('aria-label',label);
   button.setAttribute('title',label);
 });
+</script>
+
+
+<script>
+/* GO CONNECT PWA: register the app shell worker after the page has loaded. */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js', { scope: './' })
+      .catch(error => console.error('PWA service worker registration failed:', error));
+  });
+}
 </script>
 
 </body></html>
