@@ -1314,6 +1314,10 @@ html,body{min-height:100%;overscroll-behavior-x:contain}body{padding:0!important
 body.gc-force-desktop .app{width:max(1160px,min(1440px,100vw))!important;max-width:none!important;margin:0 auto!important}body.gc-force-desktop .main{width:100%!important;min-width:0!important}
 body.gc-force-desktop .gc-analytics-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}body.gc-force-desktop .gc-dark-kpis{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 @media(min-width:961px){body.gc-force-mobile .app{width:480px!important;max-width:100%!important;margin:0 auto!important}body.gc-force-mobile .sidebar{right:calc((100vw - min(480px,100vw))/2)!important}body.gc-force-mobile .main{width:100%!important;min-width:0!important}body.gc-force-mobile .bottom-nav{right:calc((100vw - min(480px,100vw))/2 + var(--gc-final-rail))!important;left:calc((100vw - min(480px,100vw))/2)!important;width:calc(min(480px,100vw) - var(--gc-final-rail))!important}body.gc-force-mobile .gc-analytics-grid{grid-template-columns:minmax(0,1fr)!important}body.gc-force-mobile .gc-dark-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+/* Dashboard occupies only the viewport area left after the fixed side rail. */
+body.dashboard-active .main{width:calc(100% - var(--gc-final-rail))!important;min-width:0!important;margin-right:var(--gc-final-rail)!important;padding-right:0!important;box-sizing:border-box!important}
+body.dashboard-active .main>.content{width:100%!important;min-width:0!important;max-width:none!important;box-sizing:border-box!important}
+body.gc-force-desktop.dashboard-active .main{width:calc(100% - var(--gc-final-rail))!important;margin-right:var(--gc-final-rail)!important}
 body.gc-force-desktop .gc-dashboard-carousel{height:124px!important;min-height:124px!important}
 @media(prefers-reduced-motion:reduce){.gc-view-toggle,.nav-item,.bottom-item{transition:none!important}}
 </style>
