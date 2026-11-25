@@ -693,7 +693,7 @@ dashboard:async()=>{
  const authTotal=authSuccess+authFailed,authRate=authTotal?authSuccess/authTotal*100:0;
  const authSuccessPct=authTotal?authSuccess/authTotal*100:0,authFailedPct=authTotal?authFailed/authTotal*100:0;
  const currentMbps=Math.min(46.2,Math.max(8,12+currentSessions*.31)),latency=38,maxSessions=Math.max(124,currentSessions);
- const hourlyWeights=[.012,.010,.009,.008,.009,.012,.020,.028,.035,.040,.045,.048,.052,.058,.066,.078,.085,.088,.082,.074,.061,.048,.035,.025];
+ const hourlyWeights=[.012,.010,.009,.008,.009,.012,.020,.028,.035,.040,.045,.048,.052,.058,.066,.072,.078,.080,.079,.075,.067,.050,.035,.025];
  const hourlyWeightTotal=hourlyWeights.reduce((a,b)=>a+b,0);
  const hourlyUsage=hourlyWeights.map(weight=>trafficGB*weight/hourlyWeightTotal);
  const trafficHours=hourlyUsage.concat(hourlyUsage[0]);
