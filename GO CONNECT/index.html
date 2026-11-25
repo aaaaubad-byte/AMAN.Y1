@@ -760,6 +760,7 @@ $('#usersCsvFile').onchange=async e=>{let file=e.target.files[0];if(!file)return
 async function exportUsers(){let a=await all('users'),csv='username,voucher,status,planId\n'+a.map(x=>[x.username,x.voucher,x.status,x.planId].map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(',')).join('\n');download('radius-users.csv',csv,'text/csv;charset=utf-8')}
 async function exportReport(){let a=await all('accounting'),csv='username,startedAt,endedAt,download,upload,nas,cause\n'+a.map(x=>[x.username,x.startedAt,x.endedAt,x.download,x.upload,x.nasName,x.terminateCause].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n');download('radius-accounting-report.csv',csv,'text/csv;charset=utf-8')}
 $('.nav-item').forEach(b=>b.onclick=()=>go(b.dataset.page));$('.bottom-item[data-page]').forEach(b=>b.onclick=()=>go(b.dataset.page));$('#mobileMenuButton')?.addEventListener('click',openDrawer);$('#drawerClose')?.addEventListener('click',closeDrawer);$('#drawerBackdrop')?.addEventListener('click',closeDrawer);document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});// Mobile header intentionally keeps the title uncluttered; no desktop clock widget.
+window.__gcForceDashboard=async()=>{try{if(!db){memoryMode=true;memoryStores=Object.fromEntries(stores.map(name=>[name,new Map()]))}currentPage='dashboard';await render()}catch(error){console.error('GO CONNECT dashboard render failed',error);document.body.classList.add('dashboard-active');const view=document.querySelector('#view');if(view)view.innerHTML='<section style="margin:18px;padding:20px;border:1px solid #8b3e48;border-radius:12px;background:#211a24;color:#f5dce0;direction:rtl"><h3>تعذر تحميل لوحة المعلومات</h3><p>حدث خطأ أثناء تجهيز مؤشرات الشبكة. أعد تحميل الصفحة، وإذا استمر العطل أرسل هذه الشاشة للدعم.</p></section>'}};
 initDB().then(render).catch(e=>{console.error(e);$('#view').innerHTML='<div class="notice">تعذر فتح قاعدة البيانات المحلية. تحقق من دعم IndexedDB في المتصفح.</div>'});
 })();
 </script>
@@ -1221,5 +1222,9 @@ body.dashboard-active .content{width:100%!important;max-width:1160px!important;m
 }
 @media(prefers-reduced-motion:reduce){.gc-dashboard-carousel *,.gc-dot{transition:none!important}}
 </style>
+<script id="gc-dashboard-render-guard">
+/* Recover the dashboard if local database initialization is delayed or blocked by the browser. */
+window.addEventListener('load',()=>{setTimeout(()=>{if(!document.querySelector('.gc-dashboard-page'))window.__gcForceDashboard?.()},1200)});
+</script>
 </body></html>
 
