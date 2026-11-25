@@ -672,11 +672,11 @@ dashboard:async()=>{
  const revenue=packages.reduce((a,p)=>a+p.count*p.price,0);
  const grantedGB=packages.reduce((a,p)=>a+p.count*p.quota,0);
  const grantedHours=packages.reduce((a,p)=>a+p.count*p.hours,0);
- const weeklySalesFactors=[.86,.91,.94,.89,.97,.93,1];
+ const weeklySalesFactors=[1,.93,.97,.89,.94,.91,.86];
  const weeklyPackageSales=weeklySalesFactors.map(factor=>packages.map(p=>Math.max(1,Math.round(p.count*factor))));
  const weeklySold=weeklyPackageSales.map(row=>row.reduce((sum,count)=>sum+count,0));
  const weeklyRevenue=weeklyPackageSales.map(row=>row.reduce((sum,count,i)=>sum+count*packages[i].price,0));
- const previousRevenue=weeklyRevenue[5],growth=(revenue/previousRevenue-1)*100;
+ const previousRevenue=weeklyRevenue[1],growth=(revenue/previousRevenue-1)*100;
  const weeklyRevenueTotal=weeklyRevenue.reduce((a,b)=>a+b,0),weeklySalesTotal=weeklySold.reduce((a,b)=>a+b,0);
  const connected=sessions.filter(x=>x.status==='متصل');
  const currentSessions=sessions.length?connected.length:78;
@@ -697,15 +697,15 @@ dashboard:async()=>{
  const hourlyWeightTotal=hourlyWeights.reduce((a,b)=>a+b,0);
  const hourlyUsage=hourlyWeights.map(weight=>trafficGB*weight/hourlyWeightTotal);
  const trafficHours=hourlyUsage.concat(hourlyUsage[0]);
- const weeklyLabels=['الخميس','الجمعة','السبت','الأحد','الإثنين','الثلاثاء','الأربعاء'];
+ const weeklyLabels=['الأربعاء','الثلاثاء','الإثنين','الأحد','السبت','الجمعة','الخميس'];
  const barSvg=(values,idName)=>{
   const w=620,h=150,left=18,right=18,top=12,bottom=12,max=Math.max(1,...values)*1.18,slot=(w-left-right)/values.length,bw=Math.min(42,slot*.48);
-  const bars=values.map((v,i)=>{const bh=Math.max(3,v/max*(h-top-bottom)),x=left+i*slot+(slot-bw)/2,y=h-bottom-bh;return '<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="5" fill="'+(i===values.length-1?'#35b8aa':'#6687d8')+'" opacity="'+(i===values.length-1?'1':'.78')+'"><title>'+weeklyLabels[i]+': '+n(v)+'</title></rect>';}).join('');
+  const bars=values.map((v,i)=>{const bh=Math.max(3,v/max*(h-top-bottom)),x=left+(values.length-1-i)*slot+(slot-bw)/2,y=h-bottom-bh;return '<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="5" fill="'+(i===0?'#35b8aa':'#6687d8')+'" opacity="'+(i===0?'1':'.78')+'"><title>'+weeklyLabels[i]+': '+n(v)+'</title></rect>';}).join('');
   return '<svg class="gc-line-svg gc-bar-svg" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" role="img" aria-label="أعمدة الأداء خلال الأسبوع"><path d="M18 35H602M18 75H602M18 115H602" stroke="#273443" stroke-dasharray="3 5" fill="none"/>'+bars+'</svg>';
  };
  const miniBars=values=>{
   const max=Math.max(1,...values);
-  return '<div class="gc-hero-mini gc-hero-mini-bars" role="img" aria-label="اتجاه المبيعات الأسبوعية">'+values.map((v,i)=>'<i style="height:'+Math.max(12,v/max*100).toFixed(1)+'%;opacity:'+(i===values.length-1?'1':'.72')+'"></i>').join('')+'</div>';
+  return '<div class="gc-hero-mini gc-hero-mini-bars" role="img" aria-label="اتجاه المبيعات الأسبوعية">'+values.map((v,i)=>'<i style="height:'+Math.max(12,v/max*100).toFixed(1)+'%;opacity:'+(i===0?'1':'.72')+'"></i>').join('')+'</div>';
  };
  const miniLine=values=>{
   const w=112,h=38,p=3,min=Math.min(...values),max=Math.max(...values),range=Math.max(1,max-min);
