@@ -516,7 +516,6 @@ body.dashboard-active .content{width:100%!important;max-width:1180px!important;m
 <aside class="sidebar" id="sidebar" aria-label="القائمة الرئيسية">
  <div class="drawer-head"><div class="brand"><div class="brand-mark"><span>GO</span><small class="brand-connect">CONNECT</small></div><div><b>RADIUS Manager</b><small>إدارة شبكة Wi-Fi</small></div></div><button class="drawer-close" id="drawerClose" aria-label="إغلاق القائمة">×</button></div>
  <button class="gc-view-toggle" id="gcViewToggle" type="button" aria-label="التبديل إلى عرض سطح المكتب" title="التبديل إلى عرض سطح المكتب"><span class="ico" data-icon="monitor"></span></button>
- <button class="gc-view-toggle gc-longshot-toggle" id="gcLongshotToggle" type="button" aria-label="تفعيل وضع لقطة الشاشة الطويلة" title="وضع لقطة الشاشة الطويلة" aria-pressed="false"><span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"></rect><path d="M8 8h8M8 12h8M8 16h5"></path></svg></span></button>
  
  <div class="nav-group"><div class="nav-title">خادم RADIUS</div>
  <button class="nav-item" data-page="server"><span class="ico" data-icon="server"></span><span>إعدادات الخادم</span></button><button class="nav-item" data-page="nas"><span class="ico" data-icon="router"></span><span>أجهزة NAS</span></button><button class="nav-item" data-page="auth"><span class="ico" data-icon="shield-check"></span><span>المصادقة</span></button><button class="nav-item" data-page="accounting"><span class="ico" data-icon="calculator"></span><span>المحاسبة</span></button></div>
@@ -797,7 +796,7 @@ $('#importFile').onchange=async e=>{let file=e.target.files[0];if(!file)return;t
 $('#usersCsvFile').onchange=async e=>{let file=e.target.files[0];if(!file)return;try{let lines=(await file.text()).replace(/^\uFEFF/,'').split(/\r?\n/).filter(Boolean);if(lines.length<2)throw Error();let headers=lines.shift().split(',').map(x=>x.trim().replace(/^"|"$/g,''));let index=k=>headers.indexOf(k);let ui=index('username'),vi=index('voucher'),si=index('status'),pi=index('planId');if(ui<0)throw Error();let added=0;for(let line of lines){let cols=line.match(/(?:"([^"]*(?:""[^"]*)*)"|([^,]*))(?:,|$)/g)||[];let vals=cols.map(x=>x.replace(/,$/,'').replace(/^"|"$/g,'').replace(/""/g,'"'));let username=vals[ui]?.trim();if(!username)continue;let exists=(await all('users')).some(x=>x.username===username);if(exists)continue;await put('users',{id:id(),username,voucher:vals[vi]||'',status:vals[si]||'نشط',planId:vals[pi]||'',createdAt:Date.now(),sessions:1});added++;}await log('استيراد CSV','مستخدمون',`${added} حساب`);notify(`تم استيراد ${added} حساب`);render()}catch(err){notify('تعذر قراءة CSV. تأكد من وجود عمود username')}e.target.value=''};
 async function exportUsers(){let a=await all('users'),csv='username,voucher,status,planId\n'+a.map(x=>[x.username,x.voucher,x.status,x.planId].map(v=>'"'+String(v||'').replace(/"/g,'""')+'"').join(',')).join('\n');download('radius-users.csv',csv,'text/csv;charset=utf-8')}
 async function exportReport(){let a=await all('accounting'),csv='username,startedAt,endedAt,download,upload,nas,cause\n'+a.map(x=>[x.username,x.startedAt,x.endedAt,x.download,x.upload,x.nasName,x.terminateCause].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n');download('radius-accounting-report.csv',csv,'text/csv;charset=utf-8')}
-$('.nav-item').forEach(b=>b.onclick=()=>go(b.dataset.page));$('.bottom-item[data-page]').forEach(b=>b.onclick=()=>go(b.dataset.page));const longshotToggle=$('#gcLongshotToggle');longshotToggle?.addEventListener('click',()=>{const active=document.body.classList.toggle('gc-longshot-mode');longshotToggle.setAttribute('aria-pressed',String(active));const label=active?'إيقاف وضع لقطة الشاشة الطويلة':'تفعيل وضع لقطة الشاشة الطويلة';longshotToggle.setAttribute('aria-label',label);longshotToggle.title=active?'إيقاف وضع لقطة الشاشة الطويلة':'وضع لقطة الشاشة الطويلة';});$('#mobileMenuButton')?.addEventListener('click',openDrawer);$('#drawerClose')?.addEventListener('click',closeDrawer);$('#drawerBackdrop')?.addEventListener('click',closeDrawer);document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});// Mobile header intentionally keeps the title uncluttered; no desktop clock widget.
+$$('.nav-item').forEach(b=>b.onclick=()=>go(b.dataset.page));$$('.bottom-item[data-page]').forEach(b=>b.onclick=()=>go(b.dataset.page));$('#mobileMenuButton')?.addEventListener('click',openDrawer);$('#drawerClose')?.addEventListener('click',closeDrawer);$('#drawerBackdrop')?.addEventListener('click',closeDrawer);document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer()});// Mobile header intentionally keeps the title uncluttered; no desktop clock widget.
 window.__gcForceDashboard=async()=>{try{if(!db){memoryMode=true;memoryStores=Object.fromEntries(stores.map(name=>[name,new Map()]))}currentPage='dashboard';await render()}catch(error){console.error('GO CONNECT dashboard render failed',error);document.body.classList.add('dashboard-active');const view=document.querySelector('#view');if(view)view.innerHTML='<section style="margin:18px;padding:20px;border:1px solid #8b3e48;border-radius:12px;background:#211a24;color:#f5dce0;direction:rtl"><h3>تعذر تحميل لوحة المعلومات</h3><p>حدث خطأ أثناء تجهيز مؤشرات الشبكة. أعد تحميل الصفحة، وإذا استمر العطل أرسل هذه الشاشة للدعم.</p></section>'}};
 initDB().then(render).catch(e=>{console.error(e);$('#view').innerHTML='<div class="notice">تعذر فتح قاعدة البيانات المحلية. تحقق من دعم IndexedDB في المتصفح.</div>'});
 })();
@@ -1426,19 +1425,6 @@ body.gc-force-desktop .gc-dashboard-carousel{height:93px!important;min-height:93
 }
 
  .gc-weekly-axis{display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr));direction:rtl!important;justify-content:initial!important;gap:0!important;padding-inline:2.9032258%!important;box-sizing:border-box!important}.gc-weekly-axis span{display:block;min-width:0;text-align:center!important;white-space:nowrap!important;}
-
-/* Long screenshot mode: put navigation into document flow so Samsung Scroll Capture stitches it only once. */
-body.gc-longshot-mode .sidebar{
- position:absolute!important;top:0!important;right:0!important;bottom:auto!important;left:auto!important;
- height:max-content!important;max-height:none!important;overflow:visible!important;
- transform:none!important;transition:none!important;
-}
-body.gc-longshot-mode .bottom-nav{
- position:absolute!important;top:auto!important;right:var(--gc-final-rail)!important;left:0!important;
- bottom:0!important;width:calc(100% - var(--gc-final-rail))!important;
-}
-body.gc-longshot-mode .bottom-nav::after{display:none!important;content:none!important}
-body.gc-longshot-mode .gc-longshot-toggle{background:#e7f2f3!important;color:var(--gc-final-nav-active)!important;border-color:#b9d9dc!important}
 </style>
 <script id="gc-dashboard-render-guard">
 /* Recover the dashboard if local database initialization is delayed or blocked by the browser. */
