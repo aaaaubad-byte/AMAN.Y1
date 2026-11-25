@@ -685,7 +685,8 @@ dashboard:async()=>{
  const packageShares=packages.map(p=>p.count/sold*100);
  const packageRows=packages.map((p,i)=>'<div class="gc-package-row"><span class="gc-package-marker" style="background:'+p.color+'"></span><div class="gc-package-main"><b>'+n(p.price)+' ريال</b><small>'+p.hours+' ساعات · '+(p.quota<1?'400 MB':p.quota+' GB')+' · صلاحية '+p.validity+' أيام</small></div><strong>'+n(p.count)+' <small>كرت</small></strong><span class="gc-package-revenue">'+n(p.count*p.price)+' ريال</span></div>').join('');
  const authBars=authHours.map(x=>'<div class="gc-auth-row"><div class="gc-auth-label"><span>'+x.label+'</span><b>'+n(x.ok+x.fail)+'</b></div><div class="gc-auth-track"><i style="width:'+(x.ok/405*100)+'%"></i><em style="width:'+(x.fail/405*100)+'%"></em></div><small><span>'+n(x.ok)+' ناجحة</span><span>'+n(x.fail)+' فاشلة</span></small></div>').join('');
- const nasRows=Array.from({length:totalNas},(_,i)=>'<div class="gc-nas-row"><span class="gc-nas-symbol">'+icon('M4 5h16v5H4zM4 14h16v5H4z')+'</span><div><b>NAS-'+String(i+1).padStart(2,'0')+'</b><small>'+(i<activeNas?'متصل':'غير متصل')+'</small></div><i class="'+(i<activeNas?'is-online':'is-offline')+'"></i></div>').join('');
+ const nasList=nas.length?nas:Array.from({length:8},(_,i)=>({name:'NAS-'+String(i+1).padStart(2,'0'),status:'نشط'}));
+ const nasRows=nasList.map((device,i)=>{const online=device.status==='نشط'||device.status==='متصل';return '<div class="gc-nas-row"><span class="gc-nas-symbol">'+icon('M4 5h16v5H4zM4 14h16v5H4z')+'</span><div><b>'+esc(device.name||('NAS-'+String(i+1).padStart(2,'0')))+'</b><small>'+(online?'متصل':'غير متصل')+'</small></div><i class="'+(online?'is-online':'is-offline')+'"></i></div>'}).join('');
  const slides=[
   {caption:'الأداء التجاري اليوم',title:'مبيعات كروت الإنترنت',value:n(sold),unit:'كرت',sub:n(revenue)+' ريال · متوسط الكرت '+n(revenue/sold)+' ريال',visual:'<div class="gc-hero-visual gc-hero-sales"><b>'+growth.toFixed(1)+'%</b><small>مقارنة بالأمس</small><i></i></div>'},
   {caption:'الحصص الممنوحة اليوم',title:'حجم البيانات المباعة',value:f1(grantedGB),unit:'GB',sub:n(grantedHours)+' ساعة استخدام موزعة على '+n(sold)+' كرت',visual:'<div class="gc-hero-visual gc-hero-ring" style="--hero-pct:100%"><b>3</b><small>باقات</small></div>'},
@@ -1158,6 +1159,7 @@ body.dashboard-active .content{width:100%!important;max-width:1160px!important;m
 .gc-nas-footer b{color:#e9eff7}
 @media(max-width:960px){body.dashboard-active .content{padding:14px 15px 24px!important}.gc-dark-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.gc-analytics-grid{grid-template-columns:minmax(0,1fr)}.gc-nas-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:680px){
+ .main{padding-right:0!important}
  body.dashboard-active .app{width:100%!important;max-width:none!important;min-height:100dvh!important;border-radius:0!important;overflow:visible!important}
  body.dashboard-active .main{padding-right:0!important;padding-bottom:calc(66px + var(--safe-bottom))!important}
  body.dashboard-active .content{max-width:none!important;padding:12px 12px 24px!important}
