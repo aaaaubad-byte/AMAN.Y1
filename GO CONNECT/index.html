@@ -607,7 +607,7 @@ const navIconPaths={
  'smartphone':'<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>'
 };
 function paintNavIcons(){document.querySelectorAll('[data-icon]').forEach(el=>{const d=navIconPaths[el.dataset.icon];if(d)el.innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`})}
-paintNavIcons();$('#sidebar .nav-item').forEach(b=>{const label=b.querySelector('span:not(.ico)')?.textContent.trim()||b.dataset.page;b.title=label;b.setAttribute('aria-label',label)});$('.bottom-item').forEach(b=>{const label=b.querySelector('span:not(.ico)')?.textContent.trim()||b.dataset.page;b.title=label;b.setAttribute('aria-label',label)});
+paintNavIcons();$$('#sidebar .nav-item').forEach(b=>{const label=b.querySelector('span:not(.ico)')?.textContent.trim()||b.dataset.page;b.title=label;b.setAttribute('aria-label',label)});$$('.bottom-item').forEach(b=>{const label=b.querySelector('span:not(.ico)')?.textContent.trim()||b.dataset.page;b.title=label;b.setAttribute('aria-label',label)});
 let gcDisplayMode='mobile';
 try{gcDisplayMode=localStorage.getItem('gc_display_mode')||(window.innerWidth>900?'desktop':'mobile')}catch(_){gcDisplayMode=window.innerWidth>900?'desktop':'mobile'}
 function applyGcDisplayMode(mode){
