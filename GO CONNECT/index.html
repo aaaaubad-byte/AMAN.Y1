@@ -636,19 +636,21 @@ const pages={
 dashboard:async()=>{
  const data=await Promise.all(['nas','users','vouchers','sessions','accounting','authLogs'].map(all));
  const nas=data[0],users=data[1],vouchers=data[2],sessions=data[3],accounting=data[4],auth=data[5];
- const n=v=>Number(v||0).toLocaleString('ar-YE');
- const f1=v=>Number(v||0).toLocaleString('ar-YE',{minimumFractionDigits:1,maximumFractionDigits:1});
+ const n=v=>Number(v||0).toLocaleString('en-US',{maximumFractionDigits:0});
+ const f1=v=>Number(v||0).toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:2});
  const icon=path=>'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+path+'"/></svg>';
  const packages=[
-  {price:100,count:263,hours:2,quota:.4,validity:2,color:'#6d91f2',className:'c100'},
-  {price:250,count:139,hours:4,quota:1,validity:4,color:'#25b9aa',className:'c250'},
-  {price:500,count:48,hours:8,quota:2,validity:8,color:'#e9ae4f',className:'c500'}
+  {price:100,count:279,hours:2,quota:.4,validity:2,color:'#6d91f2',className:'c100'},
+  {price:250,count:143,hours:4,quota:1,validity:4,color:'#25b9aa',className:'c250'},
+  {price:500,count:51,hours:8,quota:2,validity:8,color:'#e9ae4f',className:'c500'}
  ];
  const sold=packages.reduce((a,p)=>a+p.count,0);
  const revenue=packages.reduce((a,p)=>a+p.count*p.price,0);
  const grantedGB=packages.reduce((a,p)=>a+p.count*p.quota,0);
  const grantedHours=packages.reduce((a,p)=>a+p.count*p.hours,0);
- const previousRevenue=79550,growth=(revenue/previousRevenue-1)*100;
+ const weeklyPackageSales=[[251,132,43],[263,138,46],[257,141,47],[269,139,48],[274,142,49],[271,145,50],[279,143,51]];
+ const weeklyRevenue=weeklyPackageSales.map(row=>row[0]*100+row[1]*250+row[2]*500);
+ const previousRevenue=weeklyRevenue[5],growth=(revenue/previousRevenue-1)*100;
  const connected=sessions.filter(x=>x.status==='متصل');
  const currentSessions=sessions.length?connected.length:78;
  const totalUsers=users.length||1386;
@@ -659,8 +661,8 @@ dashboard:async()=>{
  const todayStart=new Date();todayStart.setHours(0,0,0,0);
  const todayAccounting=accounting.filter(x=>(+x.startedAt||0)>=todayStart.getTime());
  const GB=1024*1024*1024;
- const downGB=todayAccounting.length?todayAccounting.reduce((a,x)=>a+(+x.download||0),0)/GB:238.2;
- const upGB=todayAccounting.length?todayAccounting.reduce((a,x)=>a+(+x.upload||0),0)/GB:26.5;
+ const downGB=todayAccounting.length?todayAccounting.reduce((a,x)=>a+(+x.download||0),0)/GB:grantedGB*.69;
+ const upGB=todayAccounting.length?todayAccounting.reduce((a,x)=>a+(+x.upload||0),0)/GB:grantedGB*.079;
  const trafficGB=downGB+upGB;
  const recentAuth=auth.filter(x=>(+x.at||0)>=Date.now()-86400000);
  const authSuccess=recentAuth.length?recentAuth.filter(x=>x.result==='مقبول').length:1214;
@@ -673,7 +675,6 @@ dashboard:async()=>{
   {label:'08–12',ok:145,fail:9},{label:'12–16',ok:216,fail:14},
   {label:'16–20',ok:388,fail:21},{label:'20–24',ok:405,fail:22}
  ];
- const weeklyRevenue=[73420,78650,81300,79550,82180,84320,85050];
  const weeklyLabels=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
  const lineSvg=(values,idName)=>{
   const w=620,h=170,p=15,max=Math.max.apply(null,values)*1.18;
@@ -697,7 +698,7 @@ dashboard:async()=>{
  ];
  const slideHtml=slides.map((x,i)=>'<article class="gc-slide '+(i===0?'is-active':'')+'"><div class="gc-hero-copy"><small>'+x.caption+'</small><h3>'+x.title+'</h3><strong class="gc-hero-value">'+x.value+' <em>'+x.unit+'</em></strong><span class="gc-hero-sub">'+x.sub+'</span></div>'+x.visual+'<span class="gc-slide-index">0'+(i+1)+' / 05</span></article>').join('');
  const stockPct=totalVouchers?Math.round(availableVouchers/totalVouchers*100):0;
- const today=new Date().toLocaleDateString('ar-YE',{weekday:'long',day:'numeric',month:'long'});
+ const today=new Date().toLocaleDateString('ar-YE',{weekday:'long',day:'numeric',month:'long'}).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
  const kpis=[
   '<article class="gc-dark-kpi"><div class="gc-kpi-head"><span class="gc-kpi-icon">'+icon('M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M20 8v6m3-3h-6')+'</span><span>المستخدمون المسجلون</span></div><strong>'+n(totalUsers)+'</strong><small>حساب على الشبكة</small></article>',
   '<article class="gc-dark-kpi"><div class="gc-kpi-head"><span class="gc-kpi-icon">'+icon('M3 7.5A2.5 2.5 0 0 1 5.5 5h13A2.5 2.5 0 0 1 21 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5zM8 5v14')+'</span><span>مخزون الكروت المتاح</span></div><strong>'+n(availableVouchers)+'</strong><small>من '+n(totalVouchers)+' كرت · '+stockPct+'% متاح</small><div class="gc-mini-progress"><i style="width:'+stockPct+'%"></i></div></article>',
