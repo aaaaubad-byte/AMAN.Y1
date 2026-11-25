@@ -1317,6 +1317,15 @@ body.dashboard-active .main{width:calc(100% - var(--gc-final-rail))!important;mi
 body.dashboard-active .main>.content{width:100%!important;min-width:0!important;max-width:none!important;box-sizing:border-box!important}
 body.gc-force-desktop.dashboard-active .main{width:calc(100% - var(--gc-final-rail))!important;margin-right:var(--gc-final-rail)!important}
 body.gc-force-desktop .gc-dashboard-carousel{height:124px!important;min-height:124px!important}
+/* Compact carousel by 25% and simplify card geometry consistently. */
+.gc-dashboard-carousel{height:93px!important;min-height:93px!important;border-radius:8px!important}
+.gc-slide{border-radius:8px!important}
+.gc-entry-card,.gc-kpi-card,.gc-kpi-grid,.gc-dark-kpi,.gc-analytics-card,.stat,.panel,.quick{border-radius:8px!important}
+.gc-entry-icon,.gc-kpi-icon,.gc-kpi-ticket,.stat-icon{border-radius:6px!important}
+.gc-dashboard-carousel:after{border-radius:50%!important}
+@media(max-width:960px){.gc-dashboard-carousel{height:87px!important;min-height:87px!important}}
+@media(max-width:420px){.gc-dashboard-carousel{height:93px!important;min-height:93px!important}}
+body.gc-force-desktop .gc-dashboard-carousel{height:93px!important;min-height:93px!important}
 @media(prefers-reduced-motion:reduce){.gc-view-toggle,.nav-item,.bottom-item{transition:none!important}}
 </style>
 <script id="gc-dashboard-render-guard">
