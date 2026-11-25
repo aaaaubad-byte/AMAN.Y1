@@ -672,28 +672,41 @@ dashboard:async()=>{
  const revenue=packages.reduce((a,p)=>a+p.count*p.price,0);
  const grantedGB=packages.reduce((a,p)=>a+p.count*p.quota,0);
  const grantedHours=packages.reduce((a,p)=>a+p.count*p.hours,0);
- const weeklySalesFactors=[[.90,.91,.84],[.94,.96,.90],[.92,.99,.92],[.97,.95,.94],[.98,.98,.96],[.97,1.01,.98],[1,1,1]];
- const weeklyPackageSales=weeklySalesFactors.map(factors=>packages.map((p,i)=>Math.max(1,Math.round(p.count*factors[i]))));
+ const weeklySalesFactors=[.86,.91,.94,.89,.97,.93,1];
+ const weeklyPackageSales=weeklySalesFactors.map(factor=>packages.map(p=>Math.max(1,Math.round(p.count*factor))));
+ const weeklySold=weeklyPackageSales.map(row=>row.reduce((sum,count)=>sum+count,0));
  const weeklyRevenue=weeklyPackageSales.map(row=>row.reduce((sum,count,i)=>sum+count*packages[i].price,0));
  const previousRevenue=weeklyRevenue[5],growth=(revenue/previousRevenue-1)*100;
+ const weeklyRevenueTotal=weeklyRevenue.reduce((a,b)=>a+b,0),weeklySalesTotal=weeklySold.reduce((a,b)=>a+b,0);
  const connected=sessions.filter(x=>x.status==='متصل');
  const currentSessions=sessions.length?connected.length:78;
  const totalUsers=users.length||1386;
- const totalVouchers=vouchers.length||2700;
- const availableVouchers=vouchers.length?vouchers.filter(x=>x.status==='متاح').length:2250;
+ const totalVouchers=vouchers.length||36500;
+ const availableVouchers=vouchers.length?vouchers.filter(x=>x.status==='متاح').length:12500;
+ const usedVouchers=vouchers.length?vouchers.filter(x=>['مستخدم','نشط','منتهي'].includes(x.status)).length:24000;
  const todayStart=new Date();todayStart.setHours(0,0,0,0);
  const todayAccounting=accounting.filter(x=>(+x.startedAt||0)>=todayStart.getTime());
  const GB=1024*1024*1024;
- const downGB=todayAccounting.length?todayAccounting.reduce((a,x)=>a+(+x.download||0),0)/GB:grantedGB*.69;
- const upGB=todayAccounting.length?todayAccounting.reduce((a,x)=>a+(+x.upload||0),0)/GB:grantedGB*.079;
- const trafficGB=downGB+upGB;
+ const measuredDown=todayAccounting.reduce((a,x)=>a+(+x.download||0),0)/GB;
+ const measuredUp=todayAccounting.reduce((a,x)=>a+(+x.upload||0),0)/GB;
+ const modeledTraffic=Math.max(24,currentSessions*.42);
+ const trafficGB=todayAccounting.length?measuredDown+measuredUp:modeledTraffic;
+ const downGB=todayAccounting.length?measuredDown:trafficGB*.78;
+ const upGB=todayAccounting.length?measuredUp:trafficGB*.22;
  const recentAuth=auth.filter(x=>(+x.at||0)>=Date.now()-86400000);
  const authSuccess=recentAuth.length?recentAuth.filter(x=>x.result==='مقبول').length:1214;
  const authFailed=recentAuth.length?recentAuth.filter(x=>x.result!=='مقبول').length:72;
  const authTotal=authSuccess+authFailed,authRate=authTotal?authSuccess/authTotal*100:0;
- const currentMbps=86.4,latency=24,maxSessions=124;
- const trafficHours=[.045,.04,.06,.09,.12,.17,.21,.265].map(weight=>trafficGB*weight);
+ const currentMbps=Math.min(46.2,Math.max(8,12+currentSessions*.31)),latency=38,maxSessions=124;
+ const hourlyWeights=[.018,.014,.012,.010,.012,.018,.028,.040,.050,.055,.060,.065,.070,.075,.085,.095,.105,.110,.105,.090,.070,.055,.040,.028];
+ const hourlyWeightTotal=hourlyWeights.reduce((a,b)=>a+b,0);
+ const trafficHours=hourlyWeights.map(weight=>trafficGB*weight/hourlyWeightTotal);
  const weeklyLabels=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+ const barSvg=(values,idName)=>{
+  const w=620,h=150,left=18,right=18,top=12,bottom=12,max=Math.max(1,...values)*1.18,slot=(w-left-right)/values.length,bw=Math.min(42,slot*.48);
+  const bars=values.map((v,i)=>{const bh=Math.max(3,v/max*(h-top-bottom)),x=left+i*slot+(slot-bw)/2,y=h-bottom-bh;return '<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="5" fill="'+(i===values.length-1?'#35b8aa':'#6687d8')+'" opacity="'+(i===values.length-1?'1':'.78')+'"><title>'+weeklyLabels[i]+': '+n(v)+'</title></rect>';}).join('');
+  return '<svg class="gc-line-svg gc-bar-svg" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" role="img" aria-label="أعمدة الأداء خلال الأسبوع"><path d="M18 35H602M18 75H602M18 115H602" stroke="#273443" stroke-dasharray="3 5" fill="none"/>'+bars+'</svg>';
+ };
  const lineSvg=(values,idName)=>{
   const w=620,h=170,p=15,max=Math.max.apply(null,values)*1.18;
   const pts=values.map((v,i)=>[p+i*(w-2*p)/(values.length-1),h-p-v/max*(h-2*p)]);
@@ -721,12 +734,14 @@ dashboard:async()=>{
   '<article class="gc-dark-kpi"><div class="gc-kpi-head"><span class="gc-kpi-icon">'+icon('M3 12h4l3-8 4 16 3-8h4')+'</span><span>استهلاك البيانات اليوم</span></div><strong>'+f1(trafficGB)+' <em>GB</em></strong><small>تحميل '+f1(downGB)+' · رفع '+f1(upGB)+' GB</small></article>',
  ].join('');
  const trafficCard='<article class="gc-analytics-card gc-traffic-card"><div class="gc-card-heading"><div><span class="gc-card-kicker">NETWORK TRAFFIC</span><h3>حركة البيانات</h3></div><span class="gc-card-period">آخر 24 ساعة</span></div><div class="gc-chart-summary"><strong>'+f1(trafficGB)+' <em>GB</em></strong><span>إجمالي الاستهلاك</span></div>'+lineSvg(trafficHours,'gcTrafficFill')+'<div class="gc-chart-axis"><span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div><div class="gc-chart-legend"><span><i class="download"></i>تحميل '+f1(downGB)+' GB</span><span><i class="upload"></i>رفع '+f1(upGB)+' GB</span><b>'+f1(currentMbps)+' Mbps الآن</b></div></article>';
- const salesCard='<article class="gc-analytics-card gc-sales-card"><div class="gc-card-heading"><div><span class="gc-card-kicker">DAILY REVENUE</span><h3>إيرادات المبيعات</h3></div><span class="gc-card-period">آخر 7 أيام</span></div><div class="gc-chart-summary"><strong>'+n(revenue)+' <em>ريال</em></strong><span>'+n(sold)+' كرتاً اليوم</span></div>'+lineSvg(weeklyRevenue,'gcSalesFill')+'<div class="gc-chart-axis">'+weeklyLabels.map(x=>'<span>'+x+'</span>').join('')+'</div><div class="gc-sales-foot"><span>متوسط الإيراد اليومي</span><b>'+n(weeklyRevenue.reduce((a,b)=>a+b,0)/7)+' ريال</b></div></article>';
- const packageCard='<article class="gc-analytics-card gc-packages-card"><div class="gc-card-heading"><div><span class="gc-card-kicker">PACKAGE MIX</span><h3>توزيع الباقات</h3></div><span class="gc-card-period">مبيعات اليوم</span></div><div class="gc-package-overview"><div class="gc-donut" style="--p1:'+packageShares[0]+'%;--p2:'+packageShares[1]+'%;--p3:'+packageShares[2]+'%"><div><b>'+n(sold)+'</b><small>كرت مباع</small></div></div><div class="gc-package-legend"><div><i class="c100"></i><span>100 ريال</span><b>'+f1(packageShares[0])+'%</b></div><div><i class="c250"></i><span>250 ريال</span><b>'+f1(packageShares[1])+'%</b></div><div><i class="c500"></i><span>500 ريال</span><b>'+f1(packageShares[2])+'%</b></div></div></div><div class="gc-package-list">'+packageRows+'</div><div class="gc-package-total"><span>إجمالي الإيرادات</span><strong>'+n(revenue)+' ريال</strong><small>حصة البيانات '+f1(grantedGB)+' GB</small></div></article>';
+ const revenueTodayCard='<article class="gc-analytics-card gc-revenue-today"><div class="gc-card-heading"><div><span class="gc-card-kicker">TODAY REVENUE</span><h3>إيرادات اليوم</h3></div><span class="gc-card-period">اليوم</span></div><div class="gc-chart-summary"><strong>'+n(revenue)+' <em>ريال</em></strong><span>'+n(sold)+' كرتاً مباعاً</span></div><div class="gc-revenue-breakdown"><span>متوسط قيمة الكرت</span><b>'+n(revenue/Math.max(1,sold))+' ريال</b></div></article>';
+ const revenueWeekCard='<article class="gc-analytics-card gc-revenue-week"><div class="gc-card-heading"><div><span class="gc-card-kicker">WEEKLY REVENUE</span><h3>إيرادات الأسبوع</h3></div><span class="gc-card-period">آخر 7 أيام</span></div><div class="gc-chart-summary"><strong>'+n(weeklyRevenueTotal)+' <em>ريال</em></strong><span>متوسط يومي '+n(weeklyRevenueTotal/7)+' ريال</span></div>'+barSvg(weeklyRevenue,'gcWeeklyRevenue')+'<div class="gc-chart-axis">'+weeklyLabels.map(x=>'<span>'+x+'</span>').join('')+'</div></article>';
+ const salesWeekCard='<article class="gc-analytics-card gc-sales-card"><div class="gc-card-heading"><div><span class="gc-card-kicker">WEEKLY SALES</span><h3>مبيعات الكروت</h3></div><span class="gc-card-period">آخر 7 أيام</span></div><div class="gc-chart-summary"><strong>'+n(weeklySalesTotal)+' <em>كرت</em></strong><span>متوسط '+n(weeklySalesTotal/7)+' كرت يومياً</span></div>'+barSvg(weeklySold,'gcWeeklySales')+'<div class="gc-chart-axis">'+weeklyLabels.map(x=>'<span>'+x+'</span>').join('')+'</div></article>';
+ const packageCard='<article class="gc-analytics-card gc-packages-card"><div class="gc-card-heading"><div><span class="gc-card-kicker">PACKAGE MIX</span><h3>توزيع الباقات</h3></div><span class="gc-card-period">مبيعات اليوم</span></div><div class="gc-package-overview"><div class="gc-donut" style="--p1:'+packageShares[0]+'%;--p2:'+packageShares[1]+'%;--p3:'+packageShares[2]+'%"><div><b>'+n(sold)+'</b><small>كرت مباع</small></div></div><div class="gc-package-legend"><div><i class="c100"></i><span>100 ريال</span><b>'+n(packages[0].count)+' كرت</b></div><div><i class="c250"></i><span>250 ريال</span><b>'+n(packages[1].count)+' كرت</b></div><div><i class="c500"></i><span>500 ريال</span><b>'+n(packages[2].count)+' كرت</b></div></div></div></article>';
  return '<div class="gc-dashboard-page">'+
  '<section class="gc-dashboard-carousel" aria-label="المؤشرات السريعة"><div class="gc-carousel-track" id="gcCarouselTrack">'+slideHtml+'</div></section>'+
  '<div class="gc-carousel-dots" id="gcCarouselDots" aria-label="التنقل بين المؤشرات">'+Array.from({length:5},(_,i)=>'<button type="button" class="gc-dot '+(i===0?'active':'')+'" data-slide="'+i+'" aria-label="المؤشر '+(i+1)+'" aria-current="'+(i===0?'true':'false')+'"></button>').join('')+'</div>'+
- '<section class="gc-analytics-grid">'+trafficCard+salesCard+packageCard+'</section></div>';
+ '<section class="gc-analytics-grid">'+trafficCard+revenueTodayCard+revenueWeekCard+salesWeekCard+packageCard+'</section></div>';
 },
 server:async()=>{let s=await get('settings','server')||{};return `${pageHead('إعدادات خادم RADIUS','قيم محلية قابلة للتحرير — غير مطبقة على خادم حقيقي')}<div class="notice">المنافذ الافتراضية: Authentication UDP 1812 وAccounting UDP 1813. تعديل القيم هنا يحفظها محلياً فقط.</div><div class="panel"><form id="serverForm"><div class="form-grid">${field('عنوان الخادم','address',s.address||'192.168.100.10')}${field('منفذ Authentication','authPort',s.authPort||1812,'number')}${field('منفذ Accounting','acctPort',s.acctPort||1813,'number')}${selectField('حالة الخدمة المعروضة','state',[{value:'محاكاة محلية',label:'محاكاة محلية'},{value:'غير متصل',label:'غير متصل'},{value:'متصل',label:'متصل (عرض فقط)'}],s.state||'محاكاة محلية')}${selectField('مصدر المصادقة','authSource',[{value:'قاعدة محلية',label:'قاعدة محلية'},{value:'FreeRADIUS',label:'FreeRADIUS (يتطلب تكاملاً)'},{value:'User Manager',label:'MikroTik User Manager (يتطلب تكاملاً)'}],s.authSource||'قاعدة محلية')}${selectField('المحاسبة','accounting',[{value:'مفعلة محلياً',label:'مفعلة محلياً'},{value:'معطلة',label:'معطلة'}],s.accounting||'مفعلة محلياً')}</div><div class="actions" style="margin-top:16px"><button class="btn primary">حفظ الإعدادات محلياً</button><button class="btn" type="button" id="testServer">اختبار الاتصال</button></div></form></div><div class="panel"><h3>إعدادات متقدمة</h3><div class="quick-grid"><div class="quick"><b>قاعدة البيانات</b><span>IndexedDB داخل هذا المتصفح</span></div><div class="quick"><b>السجلات</b><span>مصادقة ومحاسبة وعمليات محلية</span></div><div class="quick"><b>الأمان</b><span>لا توجد أسرار اتصال فعلية مخزنة</span></div></div></div>`},
 nas:async()=>{let a=await all('nas');return `${pageHead('أجهزة NAS','إدارة أجهزة MikroTik أو أي NAS مسجل',`<button class="btn primary" data-action="addNas">＋ إضافة جهاز</button>`)}${searchBar('ابحث بالاسم أو IP أو النوع')}<div id="dataTable">${table(['اسم الجهاز','عنوان IP','النوع','الموقع / الوصف','Shared Secret','الحالة','تاريخ الإضافة','إجراءات'],a.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.ip)}</td><td>${esc(x.type)}</td><td>${esc(x.location||'—')}</td><td><span class="secret">••••••••</span> <button class="btn small" data-action="revealSecret" data-id="${x.id}">إظهار</button></td><td>${status(x.status)}</td><td>${fmt(x.createdAt)}</td><td><button class="btn small" data-action="editNas" data-id="${x.id}">تعديل</button> <button class="btn small danger" data-action="deleteNas" data-id="${x.id}">حذف</button></td></tr>`))}</div>`},
@@ -1319,6 +1334,7 @@ body.gc-force-desktop.dashboard-active .main{width:calc(100% - var(--gc-final-ra
 body.gc-force-desktop .gc-dashboard-carousel{height:124px!important;min-height:124px!important}
 /* Compact carousel by 25% and simplify card geometry consistently. */
 .gc-dashboard-carousel{height:93px!important;min-height:93px!important;border-radius:8px!important}
+.gc-dashboard-carousel:after,.gc-slide:after{display:none!important;content:none!important}
 .gc-slide{border-radius:8px!important}
 .gc-entry-card,.gc-kpi-card,.gc-kpi-grid,.gc-dark-kpi,.gc-analytics-card,.stat,.panel,.quick{border-radius:8px!important}
 .gc-entry-icon,.gc-kpi-icon,.gc-kpi-ticket,.stat-icon{border-radius:6px!important}
@@ -1327,6 +1343,23 @@ body.gc-force-desktop .gc-dashboard-carousel{height:124px!important;min-height:1
 @media(max-width:420px){.gc-dashboard-carousel{height:93px!important;min-height:93px!important}}
 body.gc-force-desktop .gc-dashboard-carousel{height:93px!important;min-height:93px!important}
 @media(prefers-reduced-motion:reduce){.gc-view-toggle,.nav-item,.bottom-item{transition:none!important}}
+
+/* Commercial dashboard chart refinement: remove decorative rings and keep compact, data-led cards. */
+.gc-hero-visual:before,.gc-hero-visual:after,.gc-hero-ring:before,.gc-hero-ring:after{box-shadow:none!important}
+.gc-analytics-grid{align-items:start!important;grid-auto-rows:max-content!important}
+.gc-analytics-card{align-self:start!important;height:auto!important;min-height:0!important;border-radius:8px!important}
+.gc-chart-summary{margin-bottom:7px!important}
+.gc-bar-svg{height:116px!important;margin-top:8px!important}
+.gc-chart-axis{direction:rtl!important;gap:2px!important;color:#91a0b2!important}
+.gc-chart-axis span{flex:1;text-align:center;white-space:nowrap;font-size:8px!important}
+.gc-revenue-breakdown{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:11px;border-top:1px solid #273443;color:#91a0b2;font-size:10px}
+.gc-revenue-breakdown b{color:#e9f1f8;font-size:12px}
+.gc-package-overview{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px!important;padding:9px 2px!important}
+.gc-package-legend{flex:1;min-width:0;gap:13px!important}
+.gc-package-legend>div{display:grid!important;grid-template-columns:9px minmax(0,1fr) auto!important;align-items:center!important;gap:7px!important;font-size:10px!important}
+.gc-package-legend>div b{color:#e5edf6!important;font-size:10px!important;white-space:nowrap}
+.gc-package-list,.gc-package-total{display:none!important}
+@media(max-width:520px){.gc-package-overview{justify-content:flex-start!important;gap:18px!important}.gc-package-legend>div{font-size:9px!important}.gc-bar-svg{height:100px!important}}
 </style>
 <script id="gc-dashboard-render-guard">
 /* Recover the dashboard if local database initialization is delayed or blocked by the browser. */
