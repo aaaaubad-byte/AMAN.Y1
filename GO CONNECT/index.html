@@ -697,7 +697,7 @@ dashboard:async()=>{
  const hourlyWeightTotal=hourlyWeights.reduce((a,b)=>a+b,0);
  const hourlyUsage=hourlyWeights.map(weight=>trafficGB*weight/hourlyWeightTotal);
  const trafficHours=hourlyUsage.concat(hourlyUsage[0]);
- const weeklyLabels=['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+ const weeklyLabels=['الخميس','الجمعة','السبت','الأحد','الإثنين','الثلاثاء','الأربعاء'];
  const barSvg=(values,idName)=>{
   const w=620,h=150,left=18,right=18,top=12,bottom=12,max=Math.max(1,...values)*1.18,slot=(w-left-right)/values.length,bw=Math.min(42,slot*.48);
   const bars=values.map((v,i)=>{const bh=Math.max(3,v/max*(h-top-bottom)),x=left+i*slot+(slot-bw)/2,y=h-bottom-bh;return '<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="5" fill="'+(i===values.length-1?'#35b8aa':'#6687d8')+'" opacity="'+(i===values.length-1?'1':'.78')+'"><title>'+weeklyLabels[i]+': '+n(v)+'</title></rect>';}).join('');
